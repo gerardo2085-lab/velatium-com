@@ -702,40 +702,23 @@
 
     // ── EMAIL FORM ──
     function handleSubmit() {
-  const email = document.getElementById('emailInput').value;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(email)) {
-    document.getElementById('emailInput').style.borderBottom = '1px solid #C0392B';
-    return;
-  }
-
-  fetch("https://subscribe.beehiiv.com/fe9cfab8-7ad2-4e2e-a901-951969786ecf", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      email: email
-    })
-  })
-  .then(response => {
-    if (response.ok) {
+      const email = document.getElementById('emailInput').value;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        document.getElementById('emailInput').style.borderBottom = '1px solid #C0392B';
+        return;
+      }
       document.getElementById('emailForm').style.display = 'none';
       document.getElementById('successMsg').style.display = 'block';
-    } else {
-      alert("Something went wrong. Try again.");
+      // TO CONNECT TO BEEHIIV OR MAILCHIMP:
+      // Replace this with your actual form submission endpoint
+      // fetch('YOUR_NEWSLETTER_ENDPOINT', { method: 'POST', body: JSON.stringify({email}) })
     }
-  })
-  .catch(() => {
-    alert("Network error. Try again.");
-  });
-}
 
-// Enter key submits form
-document.getElementById('emailInput').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') handleSubmit();
-});
+    // Enter key submits form
+    document.getElementById('emailInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') handleSubmit();
+    });
 </script>
 
 </body>
