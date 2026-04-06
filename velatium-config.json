@@ -1,0 +1,57 @@
+{
+  "_meta": {
+    "file": "velatium-config.json",
+    "version": "1.0",
+    "last_updated": "2026-04-05",
+    "deploys_to": "Config only — Drive: 10_Web_Deploy/Config/",
+    "changes": "Initial deploy — master deployment configuration"
+  },
+  "repos": {
+    "EN": {
+      "owner": "YOUR_GITHUB_USERNAME",
+      "repo": "thevelatium-com",
+      "branch": "main"
+    },
+    "ES": {
+      "owner": "YOUR_GITHUB_USERNAME",
+      "repo": "thevelatium-net",
+      "branch": "main"
+    }
+  },
+  "drive": {
+    "hq_root_folder_id": "YOUR_HQ_ROOT_FOLDER_ID",
+    "deploy_inbox_folder_id": "YOUR_DEPLOY_INBOX_FOLDER_ID",
+    "deployed_folder_id": "YOUR_DEPLOYED_FOLDER_ID",
+    "failed_folder_id": "YOUR_FAILED_FOLDER_ID",
+    "config_folder_id": "YOUR_CONFIG_FOLDER_ID"
+  },
+  "notifications": {
+    "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID"
+  },
+  "push": {
+    "provider": "onesignal",
+    "onesignal_app_id": "YOUR_ONESIGNAL_APP_ID",
+    "max_pushes_per_week": 1
+  },
+  "geo": {
+    "api_url": "http://ip-api.com/json/",
+    "cache_hours": 24,
+    "latam_highlight_color": "#C8A951",
+    "latam_countries": [
+      "MX","CU","PR","DO","GT","BZ","HN","SV","NI","CR","PA",
+      "CO","VE","EC","PE","BO","CL","AR","UY","PY","BR",
+      "GY","SR","GF","TT","JM","HT","BB","LC","VC","GD","AG","DM","KN"
+    ]
+  },
+  "social_proof": {
+    "update_schedule": "every_monday_0900_utc",
+    "youtube_channel_es": "YOUR_YOUTUBE_CHANNEL_ID_ES",
+    "youtube_channel_en": "YOUR_YOUTUBE_CHANNEL_ID_EN",
+    "listmonk_api_url": "YOUR_LISTMONK_URL/api",
+    "listmonk_list_id_es": 1,
+    "listmonk_list_id_en": 2
+  },
+  "version_log": true,
+  "rollback_source": "github_commit_history",
+  "_note": "Replace all YOUR_* values before first run. Adding a third language = one new entry in repos{}. Nothing else changes."
+}
