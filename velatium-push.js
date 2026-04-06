@@ -1,40 +1,38 @@
 // velatium-push.js
-// Version: 1.0
-// Last updated: 2026-04-05
+// Version: 1.1
+// Last updated: 2026-04-06
 // Deploys to: BOTH
-// Changes: Initial deploy — web push service worker and subscription handler
-//          Works with OneSignal free tier (up to 10,000 subscribers)
-//          Rule: max 1 push per week, new episodes only, never promotional
+// Changes: Production build — OneSignal web push, branded opt-in prompt,
+//          article-page only, max 1 push per week, never promotional
 
 'use strict';
 
-/* ============================================================
-   CONFIGURATION
-   Update VT_PUSH_CONFIG before deploying.
-   Add OneSignal App ID to velatium-config.json, then here.
-   ============================================================ */
-const VT_PUSH_CONFIG = {
-  onesignal_app_id: 'YOUR_ONESIGNAL_APP_ID',   // From velatium-config.json push.onesignal_app_id
-  safari_web_id: '',                             // Optional — from OneSignal if Safari is enabled
-  permission_prompt_delay_ms: 3000,             // Don't ask immediately — let them read first
+const VT_PUSH = {
+  app_id: 'YOUR_ONESIGNAL_APP_ID',
+  delay_ms: 4000,
   storage_key: 'vt_push_subscribed',
+  dismissed_key: 'vt_push_dismissed',
   gold: '#C8A951',
 };
 
-/* ============================================================
-   ONESIGNAL INITIALIZATION
-   Only runs once. Only asks after article reach (3s delay).
-   Shows branded prompt, not browser native dialog immediately.
-   ============================================================ */
-function initWebPush() {
-  // Only show on article pages. Never on homepage on first visit.
-  const isArticle = !!document.querySelector('article, .article, [data-article]');
-  if (!isArticle) return;
+function _isArticlePage() {
+  return !!document.querySelector('[data-article]');
+}
 
-  // Don't ask if already subscribed
-  if (localStorage.getItem(VT_PUSH_CONFIG.storage_key) === 'true') return;
+function _isDismissed() {
+  const d = localStorage.getItem(VT_PUSH.dismissed_key);
+  return d && Date.now() < parseInt(d, 10);
+}
 
-  // Load OneSignal SDK
+function _isSubscribed() {
+  return localStorage.getItem(VT_PUSH.storage_key) === 'true';
+}
+
+function initPush() {
+  if (!_isArticlePage()) return;
+  if (_isSubscribed()) return;
+  if (_isDismissed()) return;
+
   const script = document.createElement('script');
   script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
   script.defer = true;
@@ -43,151 +41,75 @@ function initWebPush() {
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(function(OneSignal) {
     OneSignal.init({
-      appId: VT_PUSH_CONFIG.onesignal_app_id,
-      safari_web_id: VT_PUSH_CONFIG.safari_web_id || undefined,
-      notifyButton: { enable: false },        // We control the UI
+      appId: VT_PUSH.app_id,
+      notifyButton: { enable: false },
       autoResubscribe: true,
-      promptOptions: {
-        slidedown: {
-          prompts: [
-            {
-              type: 'push',
-              autoPrompt: false,              // We trigger manually with our CTA
-              text: {
-                actionMessage: document.documentElement.lang === 'es'
-                  ? 'Recibe el próximo capítulo prohibido cuando salga.'
-                  : 'Get notified when the next forbidden chapter drops.',
-                acceptButton: document.documentElement.lang === 'es'
-                  ? 'Sí, avísame'
-                  : 'Notify me',
-                cancelButton: document.documentElement.lang === 'es'
-                  ? 'Ahora no'
-                  : 'Not now',
-              },
-            }
-          ]
-        }
-      },
     });
 
-    // Show branded prompt after delay — only after scroll engagement
-    setTimeout(() => {
-      _showBrandedPushPrompt(OneSignal);
-    }, VT_PUSH_CONFIG.permission_prompt_delay_ms);
+    setTimeout(() => _showPrompt(OneSignal), VT_PUSH.delay_ms);
 
-    // Track subscription state
-    OneSignal.User.PushSubscription.addEventListener('change', (event) => {
-      if (event.current.optedIn) {
-        localStorage.setItem(VT_PUSH_CONFIG.storage_key, 'true');
-        _removePushPrompt();
+    OneSignal.User.PushSubscription.addEventListener('change', (e) => {
+      if (e.current.optedIn) {
+        localStorage.setItem(VT_PUSH.storage_key, 'true');
+        _removePrompt();
       }
     });
   });
 }
 
-/* ============================================================
-   BRANDED PUSH PROMPT
-   Shown only after 3s dwell. Respects the audience's autonomy.
-   Not the browser native dialog — our branded UI first.
-   ============================================================ */
-function _showBrandedPushPrompt(OneSignal) {
+function _showPrompt(OneSignal) {
   if (document.querySelector('.vt-push-prompt')) return;
 
   const lang = document.documentElement.lang || 'en';
-  const headline = lang === 'es'
-    ? 'El próximo capítulo prohibido.'
-    : 'The next forbidden chapter.';
-  const sub = lang === 'es'
+  const headline = lang === 'es' ? 'El próximo capítulo prohibido.' : 'The next forbidden chapter.';
+  const sub      = lang === 'es'
     ? 'Una notificación. Solo cuando sale un episodio nuevo.'
     : 'One notification. Only when a new episode drops.';
-  const accept = lang === 'es' ? 'Avísame' : 'Notify me';
+  const accept  = lang === 'es' ? 'Avísame' : 'Notify me';
   const decline = lang === 'es' ? 'No, gracias' : 'No thanks';
 
-  const prompt = document.createElement('div');
-  prompt.className = 'vt-push-prompt';
-  prompt.style.cssText = `
-    position: fixed;
-    bottom: 24px;
-    left: 24px;
-    max-width: 300px;
-    background: #111018;
-    border: 1px solid rgba(200,169,81,0.35);
-    padding: 20px 22px;
-    z-index: 8999;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-    animation: vt-slide-up 0.4s ease both;
-  `;
+  const anim = document.createElement('style');
+  anim.textContent = '@keyframes vt-slide-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}';
+  document.head.appendChild(anim);
 
-  prompt.innerHTML = `
-    <span style="display:block;font-family:monospace;font-size:9px;letter-spacing:0.4em;color:${VT_PUSH_CONFIG.gold};margin-bottom:10px;">THE VELATIUM</span>
-    <p style="font-size:14px;font-weight:600;color:#e8e0d0;margin-bottom:6px;line-height:1.4;">${headline}</p>
-    <p style="font-size:12px;color:rgba(232,224,208,0.6);margin-bottom:16px;line-height:1.5;">${sub}</p>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <button id="vt-push-accept" style="
-        flex:1;padding:9px 12px;
-        background:${VT_PUSH_CONFIG.gold};color:#070708;
-        border:none;cursor:pointer;
-        font-family:monospace;font-size:10px;letter-spacing:0.25em;
-        text-transform:uppercase;
-      ">${accept}</button>
-      <button id="vt-push-decline" style="
-        background:none;border:none;cursor:pointer;
-        font-family:monospace;font-size:10px;letter-spacing:0.15em;
-        color:rgba(232,224,208,0.4);
-        text-transform:uppercase;
-        white-space:nowrap;
-      ">${decline}</button>
+  const el = document.createElement('div');
+  el.className = 'vt-push-prompt';
+  el.style.cssText = [
+    'position:fixed;bottom:24px;left:24px;max-width:280px',
+    'background:#0E0A1A;border:1px solid rgba(212,160,23,0.35)',
+    'padding:1.4rem 1.5rem;z-index:8999',
+    'box-shadow:0 8px 32px rgba(0,0,0,0.6)',
+    'animation:vt-slide-up 0.4s ease both'
+  ].join(';');
+  el.innerHTML = `
+    <span style="display:block;font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.4em;color:${VT_PUSH.gold};margin-bottom:0.8rem;text-transform:uppercase;">THE VELATIUM</span>
+    <p style="font-family:'Cinzel',serif;font-size:0.8rem;color:#F5EDD6;margin-bottom:0.4rem;line-height:1.4;">${headline}</p>
+    <p style="font-family:'Crimson Pro',serif;font-size:0.9rem;color:rgba(200,184,138,0.65);margin-bottom:1.2rem;line-height:1.5;font-style:italic;">${sub}</p>
+    <div style="display:flex;gap:0.8rem;align-items:center;">
+      <button id="vt-push-accept" style="flex:1;padding:0.65rem;background:${VT_PUSH.gold};color:#080510;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:0.55rem;letter-spacing:0.25em;text-transform:uppercase;">${accept}</button>
+      <button id="vt-push-decline" style="background:none;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:0.52rem;letter-spacing:0.15em;color:rgba(200,184,138,0.4);text-transform:uppercase;white-space:nowrap;">${decline}</button>
     </div>
   `;
-
-  // Inject animation if not already present
-  const style = document.createElement('style');
-  style.textContent = `@keyframes vt-slide-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-  document.head.appendChild(style);
-
-  document.body.appendChild(prompt);
+  document.body.appendChild(el);
 
   document.getElementById('vt-push-accept').addEventListener('click', async () => {
-    _removePushPrompt();
-    // This triggers the actual browser permission dialog via OneSignal
-    try {
-      await OneSignal.Slidedown.promptPush();
-    } catch (_) {
-      // If OneSignal slidedown fails, use native
+    _removePrompt();
+    try { await OneSignal.Slidedown.promptPush(); } catch (_) {
       try { await OneSignal.User.PushSubscription.optIn(); } catch (_) {}
     }
   });
 
   document.getElementById('vt-push-decline').addEventListener('click', () => {
-    _removePushPrompt();
-    // Don't ask again for 30 days
-    const expiry = Date.now() + (30 * 86400000);
-    localStorage.setItem('vt_push_dismissed', expiry.toString());
+    _removePrompt();
+    localStorage.setItem(VT_PUSH.dismissed_key, String(Date.now() + 30 * 86400000));
   });
 }
 
-function _removePushPrompt() {
+function _removePrompt() {
   const el = document.querySelector('.vt-push-prompt');
   if (el) el.remove();
 }
 
-/* ============================================================
-   INIT
-   ============================================================ */
-function initPush() {
-  // Don't show if user dismissed within 30 days
-  const dismissed = localStorage.getItem('vt_push_dismissed');
-  if (dismissed && Date.now() < parseInt(dismissed, 10)) return;
-
-  // Don't show if already subscribed
-  if (localStorage.getItem(VT_PUSH_CONFIG.storage_key) === 'true') return;
-
-  // Initialize on article pages only
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initWebPush);
-  } else {
-    initWebPush();
-  }
-}
-
-initPush();
+document.readyState === 'loading'
+  ? document.addEventListener('DOMContentLoaded', initPush)
+  : initPush();

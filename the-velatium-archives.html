@@ -411,7 +411,7 @@
         </nav>
       </div>
       <div class="lang-switch">
-        <a href="https://thevelatium.net/the-velatium-archives-es.html">ES — Español</a>
+        <a href="/the-velatium-archives-es.html" data-lang-switch>ES — Español</a>
       </div>
     </header>
 
@@ -605,6 +605,10 @@
 
     </div><!-- end content-grid -->
 
+      <!-- LIVE FEED LATEST EPISODE — auto-populated by n8n WF-FEED via content-feed.EN.json -->
+      <!-- Renders nothing until feed has data -->
+      <div data-live-feed style="margin-top:2rem;"></div>
+
     <!-- SUBSCRIBE BAR -->
     <div class="subscribe-bar">
       <div class="subscribe-bar-text">
@@ -741,6 +745,9 @@
     // Initial count
     applyFilters();
   </script>
+
+  <script src="/velatium-core.js" defer></script>
+  <script src="/velatium-push.js" defer></script>
 
 </body>
 </html>

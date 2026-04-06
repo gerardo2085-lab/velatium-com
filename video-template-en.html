@@ -69,7 +69,7 @@
     @media(max-width:600px){.nav-links{display:none}.deco-line{display:none}.format-links{flex-direction:column}.episode-notes p:first-of-type::first-letter{font-size:2.5rem}}
   </style>
 </head>
-<body>
+<body data-slug="✏️-video-slug-here" data-pillar="✏️-pillar-slug-here" data-series="✏️-series-slug-here">
   <div class="glow-bg"></div>
   <div class="stars" id="stars"></div>
   <div class="deco-line left"></div>
@@ -81,7 +81,7 @@
         <a href="/the-velatium-archives-es.html">Archivos</a>
         <a href="https://youtube.com/@TheVelatium" target="_blank">YouTube</a>
       </nav>
-      <div class="lang-switch"><a href="https://thevelatium.net/video-001-es.html">ES EN &mdash; Englishmdash; Español</a></div>
+      <div class="lang-switch"><a data-lang-switch href="https://thevelatium.net/video-001-es.html">ES &mdash; Español</a></div>
     </header>
     <div class="episode-header">
       <div class="ep-badge">▶ The Velatium &nbsp;·&nbsp; EP001 &nbsp;·&nbsp; 10 de marzo, 2026</div>
@@ -97,7 +97,7 @@
       </div>
     </div>
     <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
-    <div class="video-section">
+    <div class="video-section" data-article data-pull-quote="">
       <div class="video-wrap">
         <p class="video-label">▶ &nbsp; Watch Now</p>
         <div class="video-embed">
@@ -128,6 +128,9 @@
         <a href="/video-002-es.html">Next Video &rarr;</a>
       </div>
     </div>
+    <!-- RELATED EPISODES — auto-populated by velatium-core.js from content-feed.EN.json recent_episodes[] -->
+    <div data-related-episodes></div>
+
     <footer>
       <p class="footer-brand">The Velatium &nbsp;·&nbsp; thevelatium.com</p>
       <p class="footer-copy">&copy; 2026 The Velatium. The history they buried. The truth you deserve.</p>
@@ -142,5 +145,9 @@
       starsEl.appendChild(s);
     }
   </script>
+
+  <script src="/velatium-core.js" defer></script>
+  <script src="/velatium-push.js" defer></script>
+
 </body>
 </html>

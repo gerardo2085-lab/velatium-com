@@ -434,7 +434,7 @@
     }
   </style>
 </head>
-<body>
+<body data-slug="✏️-issue-slug-here" data-pillar="✏️-pillar-slug-here" data-series="">
 
   <div class="glow-bg"></div>
   <div class="stars" id="stars"></div>
@@ -490,7 +490,7 @@
       ARTICLE BODY — ✏️ EDIT THE CONTENT INSIDE EACH SECTION
       DO NOT change the HTML structure — only change the text
     ============================================================ -->
-    <div class="article-body">
+    <div class="article-body" data-article data-pull-quote="">
 
       <!-- ══════════════════════════════════
         SECTION 1: THE STORY
@@ -590,6 +590,9 @@
 
     </div><!-- end article-body -->
 
+    <!-- RELATED EPISODES — auto-populated by velatium-core.js from content-feed.EN.json recent_episodes[] -->
+    <div data-related-episodes></div>
+
     <footer>
       <p class="footer-brand">The Velatium Chronicle &nbsp;·&nbsp; thevelatium.com</p>
       <p class="footer-copy">© 2026 The Velatium. The history they buried. The truth you deserve.</p>
@@ -615,6 +618,10 @@
       starsEl.appendChild(star);
     }
   </script>
+
+
+  <script src="/velatium-core.js" defer></script>
+  <script src="/velatium-push.js" defer></script>
 
 </body>
 </html>
