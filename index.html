@@ -192,7 +192,7 @@
       const btn = document.querySelector('#emailForm button');
       btn.textContent = '...'; btn.disabled = true;
       try {
-        await fetch('http://100.119.2.16:5678/webhook/subscribe-en', {
+        await fetch('https://webhooks.thevelatium.com/webhook/subscribe-en', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
