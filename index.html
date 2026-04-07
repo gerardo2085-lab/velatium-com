@@ -152,7 +152,7 @@
           <button onclick="handleSubmit()">Notify Me</button>
         </div>
         <div class="success-msg" id="successMsg">
-          ✦ &nbsp; You are on the list. The archives are open. &nbsp; ✦
+          You're in.
         </div>
         <p class="email-note">Join The Velatium Chronicle — our newsletter. No spam, ever.</p>
       </div>
@@ -186,9 +186,18 @@
       star.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;--dur:${Math.random()*4+2}s;--delay:${Math.random()*5}s;--op:${Math.random()*0.5+0.2};`;
       starsEl.appendChild(star);
     }
-    function handleSubmit() {
+    async function handleSubmit() {
       const email = document.getElementById('emailInput').value;
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailInput').style.borderBottom = '1px solid #C0392B'; return; }
+      const btn = document.querySelector('#emailForm button');
+      btn.textContent = '...'; btn.disabled = true;
+      try {
+        await fetch('http://100.119.2.16:5678/webhook/subscribe-en', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+      } catch(e) {}
       document.getElementById('emailForm').style.display = 'none';
       document.getElementById('successMsg').style.display = 'block';
     }
@@ -200,3 +209,4 @@
 
 </body>
 </html>
+
