@@ -17,8 +17,8 @@ const VT = {
   geo_webhook: '/api/geo',
   lang: document.documentElement.lang || (location.hostname.endsWith('.net') ? 'es' : 'en'),
   ebook_url: 'https://a.co/d/01bFuDNp',
-  newsletter_en: 'https://www.thevelatium.com/newsletter',
-  newsletter_es: 'https://www.thevelatium.net/numero-003-es.html',
+  newsletter_en: '/#notify',
+  newsletter_es: '/#notify',
   latam_countries: [
     'MX','CU','PR','DO','GT','BZ','HN','SV','NI','CR','PA',
     'CO','VE','EC','PE','BO','CL','AR','UY','PY','BR',
@@ -311,7 +311,7 @@ function _injectNlCTA() {
     <button onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:12px;background:none;border:none;color:rgba(200,184,138,0.4);cursor:pointer;font-size:1.1rem;line-height:1;">&times;</button>
     <p style="font-family:'Cinzel',serif;font-size:0.85rem;color:#F5EDD6;margin-bottom:0.5rem;line-height:1.4;">${headline}</p>
     <p style="font-family:'Crimson Pro',serif;font-size:0.95rem;color:rgba(200,184,138,0.7);margin-bottom:1rem;font-style:italic;">${sub}</p>
-    <a href="${VT.nl_url}" target="_blank" style="display:block;text-align:center;padding:0.7rem;background:${VT.gold};color:#080510;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.25em;text-decoration:none;text-transform:uppercase;">${cta}</a>
+    <a href="${VT.nl_url}" style="display:block;text-align:center;padding:0.7rem;background:${VT.gold};color:#080510;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.25em;text-decoration:none;text-transform:uppercase;">${cta}</a>
   `;
   document.body.appendChild(el);
 }
