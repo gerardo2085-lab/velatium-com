@@ -145,6 +145,12 @@ const currentPath = Astro.url.pathname;
     drawer?.classList.remove('open');
     document.body.style.overflow = '';
   });
+drawer?.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      drawer?.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
   window.addEventListener('scroll', () => {
     nav?.classList.toggle('scrolled', window.scrollY > 20);
   }, { passive: true });
