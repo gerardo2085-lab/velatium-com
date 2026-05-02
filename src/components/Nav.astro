@@ -1,0 +1,151 @@
+---
+const currentPath = Astro.url.pathname;
+---
+
+<div class="nav-drawer" id="drawer">
+  <button class="nav-drawer-close" id="drawerClose">✕ Close</button>
+  <a href="/">Home</a>
+  <a href="/archive">Archive</a>
+  <a href="/about">About</a>
+  <a href="/subscribe">Subscribe</a>
+  <a href="/books">Books</a>
+</div>
+
+<nav id="main-nav">
+  <a href="/" class="nav-brand">The Velatium</a>
+  <ul class="nav-links">
+    <li><a href="/archive" class={currentPath === '/archive' ? 'active' : ''}>Archive</a></li>
+    <li><a href="/about" class={currentPath === '/about' ? 'active' : ''}>About</a></li>
+    <li><a href="/subscribe" class={currentPath === '/subscribe' ? 'active' : ''}>Subscribe</a></li>
+    <li><a href="/books" class={currentPath === '/books' ? 'active' : ''}>Books</a></li>
+  </ul>
+  <button class="nav-menu-btn" id="menuBtn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<style>
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: var(--bg);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    transition: backdrop-filter var(--t), background var(--t);
+  }
+  nav::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: rgba(200,169,81,0.3);
+  }
+  :global(nav.scrolled) {
+    backdrop-filter: blur(12px);
+    background: rgba(10,10,10,0.88);
+  }
+  .nav-brand {
+    font-family: var(--cinzel);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #fff;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--lato);
+    font-size: 13px;
+    color: rgba(232,224,208,0.7);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color var(--t);
+    white-space: nowrap;
+  }
+  .nav-links a:hover,
+  .nav-links a.active { color: var(--gold); }
+  .nav-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .nav-menu-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--gold);
+    transition: transform var(--t), opacity var(--t);
+  }
+  .nav-drawer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,10,0.98);
+    z-index: 999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+  }
+  .nav-drawer.open { display: flex; }
+  .nav-drawer a {
+    font-family: var(--cinzel);
+    font-size: 20px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text);
+    text-decoration: none;
+    transition: color var(--t);
+  }
+  .nav-drawer a:hover { color: var(--gold); }
+  .nav-drawer-close {
+    position: absolute;
+    top: 20px; right: 24px;
+    background: none;
+    border: 1px solid rgba(200,169,81,0.3);
+    color: var(--gold);
+    font-family: var(--cinzel);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .nav-menu-btn { display: flex; }
+  }
+</style>
+
+<script>
+  const menuBtn = document.getElementById('menuBtn');
+  const drawerClose = document.getElementById('drawerClose');
+  const drawer = document.getElementById('drawer');
+  const nav = document.getElementById('main-nav');
+
+  menuBtn?.addEventListener('click', () => {
+    drawer?.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+  drawerClose?.addEventListener('click', () => {
+    drawer?.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+  window.addEventListener('scroll', () => {
+    nav?.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+</script>
