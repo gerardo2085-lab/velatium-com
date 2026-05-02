@@ -1,0 +1,570 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { PILLAR_EMOJI } from '../../lib/episodes';
+import type { Episode } from '../../lib/episodes';
+
+export async function getStaticPaths() {
+  // Load all episode JSON files from /content/episodes/
+  const episodeFiles = await Astro.glob('../../../content/episodes/*.json');
+  return episodeFiles
+    .filter(f => !f.default.slug?.startsWith('_'))
+    .map(f => ({
+      params: { slug: f.default.slug },
+      props: { episode: f.default as Episode }
+    }));
+}
+
+const { episode } = Astro.props as { episode: Episode };
+const emoji = PILLAR_EMOJI[episode.pillar] ?? '🔍';
+---
+
+<Base
+  title={episode.title}
+  description={episode.quick_answer}
+  ogImage={episode.thumbnail}
+  lang={episode.language}
+>
+  <Nav />
+
+  <main class="article-page">
+
+    <!-- Hero -->
+    <div class="article-hero" style={`background-image: url('${episode.thumbnail}')`}>
+      <div class="article-hero-overlay"></div>
+      <div class="article-hero-content">
+        <div class="article-pillar-badge">
+          <span class="article-pillar-emoji">{emoji}</span>
+          {episode.pillarLabel}
+        </div>
+        <h1 class="article-title">{episode.title}</h1>
+        <div class="article-meta">
+          <span>{episode.date}</span>
+          <span class="meta-sep">·</span>
+          <span>{episode.duration}</span>
+          <span class="meta-sep">·</span>
+          <span class="meta-lang">{episode.language.toUpperCase()}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Three-column layout -->
+    <div class="article-layout">
+
+      <!-- Timeline rail -->
+      <aside class="article-timeline" id="article-timeline">
+        <div class="timeline-label">Timeline</div>
+        {episode.article_years?.map(year => (
+          <div class="timeline-year" data-year={year}>
+            <span class="timeline-dot"></span>
+            <span class="timeline-num">{year}</span>
+          </div>
+        ))}
+      </aside>
+
+      <!-- Article body -->
+      <article class="article-body">
+
+        <!-- Quick answer block (AEO) -->
+        <div class="quick-answer">
+          <div class="qa-label">Quick Answer</div>
+          <p>{episode.quick_answer}</p>
+        </div>
+
+        <!-- YouTube embed -->
+        {episode.youtube_id && episode.youtube_id !== 'YOUTUBE_VIDEO_ID' && (
+          <div class="video-embed">
+            <iframe
+              src={`https://www.youtube.com/embed/${episode.youtube_id}`}
+              title={episode.title}
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              loading="lazy"
+            ></iframe>
+          </div>
+        )}
+
+        <!-- Article body HTML from n8n -->
+        <div class="article-content" set:html={episode.article_body}></div>
+
+        <!-- KDP CTA -->
+        {episode.kdp_link && (
+          <div class="kdp-cta">
+            <div class="kdp-cta-label">Go deeper</div>
+            <h3>The full story is in the book.</h3>
+            <p>Everything that didn't fit in the video — documented, sourced, told without cuts.</p>
+            <a href={episode.kdp_link} target="_blank" rel="noopener" class="kdp-btn">
+              Get the Book →
+            </a>
+          </div>
+        )}
+
+        <!-- Spotify embed -->
+        {episode.spotify_id && episode.spotify_id !== 'SPOTIFY_EPISODE_ID' && (
+          <div class="spotify-embed">
+            <iframe
+              src={`https://open.spotify.com/embed/episode/${episode.spotify_id}`}
+              height="152"
+              frameborder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+            ></iframe>
+          </div>
+        )}
+
+        <!-- Newsletter embed -->
+        <div class="newsletter-block">
+          <div class="nl-label">Don't miss the next one</div>
+          <h3>The Velatium Chronicle</h3>
+          <p>The history that didn't fit in the video. Delivered to your inbox, free.</p>
+          <form class="nl-form" id="nl-form-article">
+            <input type="email" placeholder="your@email.com" required class="nl-input" />
+            <button type="submit" class="nl-btn">Subscribe</button>
+          </form>
+        </div>
+
+      </article>
+
+      <!-- TOC -->
+      <aside class="article-toc" id="article-toc">
+        <div class="toc-label">In this article</div>
+        <div id="toc-links"></div>
+      </aside>
+
+    </div>
+  </main>
+
+  <Footer />
+</Base>
+
+<style>
+  /* HERO */
+  .article-hero {
+    position: relative;
+    height: 520px;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .article-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.4) 50%, rgba(10,10,10,0.2) 100%);
+  }
+
+  .article-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 32px 48px;
+  }
+
+  .article-pillar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(200,169,81,0.3);
+    padding: 5px 12px;
+    margin-bottom: 20px;
+  }
+
+  .article-title {
+    font-family: var(--cinzel);
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    max-width: 800px;
+    margin-bottom: 16px;
+  }
+
+  .article-meta {
+    font-size: 13px;
+    color: var(--muted2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .meta-sep { color: var(--muted); }
+
+  .meta-lang {
+    font-family: var(--cinzel);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    border: 1px solid rgba(200,169,81,0.3);
+    padding: 2px 7px;
+  }
+
+  /* THREE-COLUMN LAYOUT */
+  .article-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 32px;
+    display: grid;
+    grid-template-columns: 160px 1fr 200px;
+    gap: 48px;
+    align-items: start;
+  }
+
+  /* TIMELINE */
+  .article-timeline {
+    position: sticky;
+    top: 84px;
+  }
+
+  .timeline-label {
+    font-family: var(--cinzel);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .timeline-year {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    opacity: 0.35;
+    transition: opacity 0.3s;
+    cursor: default;
+  }
+
+  .timeline-year.active { opacity: 1; }
+
+  .timeline-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+
+  .timeline-year.active .timeline-dot {
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(200,169,81,0.5);
+  }
+
+  .timeline-num {
+    font-family: var(--cinzel);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* ARTICLE BODY */
+  .article-body { min-width: 0; }
+
+  .quick-answer {
+    background: rgba(200,169,81,0.05);
+    border-left: 3px solid var(--gold);
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+
+  .qa-label {
+    font-family: var(--cinzel);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .quick-answer p {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .video-embed {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    margin-bottom: 40px;
+    background: #111;
+  }
+
+  .video-embed iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .article-content {
+    font-size: 16px;
+    line-height: 1.85;
+    color: rgba(232,224,208,0.85);
+    margin-bottom: 48px;
+  }
+
+  .article-content h2 {
+    font-family: var(--cinzel);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 48px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(200,169,81,0.12);
+  }
+
+  .article-content h3 {
+    font-family: var(--cinzel);
+    font-size: 16px;
+    color: var(--gold);
+    margin: 32px 0 12px;
+  }
+
+  .article-content p { margin-bottom: 18px; }
+
+  .article-content strong { color: var(--text); }
+
+  .article-content a {
+    color: var(--gold);
+    border-bottom: 1px solid rgba(200,169,81,0.3);
+    transition: border-color 0.2s;
+  }
+
+  .article-content a:hover { border-color: var(--gold); }
+
+  /* KDP CTA */
+  .kdp-cta {
+    background: rgba(192,57,43,0.08);
+    border: 1px solid rgba(192,57,43,0.25);
+    padding: 32px;
+    margin: 48px 0;
+  }
+
+  .kdp-cta-label {
+    font-family: var(--cinzel);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--red);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .kdp-cta h3 {
+    font-family: var(--cinzel);
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .kdp-cta p {
+    font-size: 14px;
+    color: var(--muted2);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .kdp-btn {
+    display: inline-block;
+    background: var(--red);
+    color: var(--text);
+    font-family: var(--cinzel);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    padding: 12px 28px;
+    transition: background 0.2s;
+  }
+
+  .kdp-btn:hover { background: #a93226; }
+
+  /* Spotify */
+  .spotify-embed {
+    margin: 32px 0;
+  }
+
+  .spotify-embed iframe { width: 100%; border-radius: 0; }
+
+  /* Newsletter */
+  .newsletter-block {
+    background: var(--purple);
+    border: 1px solid rgba(200,169,81,0.12);
+    padding: 36px;
+    margin-top: 60px;
+  }
+
+  .nl-label {
+    font-family: var(--cinzel);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .newsletter-block h3 {
+    font-family: var(--cinzel);
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .newsletter-block p {
+    font-size: 14px;
+    color: var(--muted2);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .nl-form {
+    display: flex;
+    gap: 0;
+  }
+
+  .nl-input {
+    flex: 1;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(200,169,81,0.2);
+    border-right: none;
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: var(--lato);
+    font-size: 14px;
+    outline: none;
+  }
+
+  .nl-input::placeholder { color: var(--muted); }
+  .nl-input:focus { border-color: rgba(200,169,81,0.5); }
+
+  .nl-btn {
+    background: var(--gold);
+    color: #0A0A0A;
+    border: none;
+    font-family: var(--cinzel);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .nl-btn:hover { background: #d4b55a; }
+
+  /* TOC */
+  .article-toc {
+    position: sticky;
+    top: 84px;
+  }
+
+  .toc-label {
+    font-family: var(--cinzel);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  #toc-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .article-layout {
+      grid-template-columns: 120px 1fr;
+    }
+
+    .article-toc { display: none; }
+  }
+
+  @media (max-width: 768px) {
+    .article-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .article-timeline { display: none; }
+    .article-hero { height: 380px; }
+  }
+</style>
+
+<script>
+  // Build TOC from H2s in article
+  const h2s = document.querySelectorAll('.article-content h2');
+  const tocLinks = document.getElementById('toc-links');
+
+  if (h2s.length > 0 && tocLinks) {
+    h2s.forEach((h2, i) => {
+      const id = `section-${i}`;
+      h2.id = id;
+      const link = document.createElement('a');
+      link.href = `#${id}`;
+      link.textContent = h2.textContent || '';
+      link.style.cssText = `font-size:12px;color:var(--muted2);line-height:1.5;display:block;transition:color 0.2s;`;
+      link.addEventListener('mouseenter', () => link.style.color = 'var(--text)');
+      link.addEventListener('mouseleave', () => link.style.color = 'var(--muted2)');
+      tocLinks.appendChild(link);
+    });
+  }
+
+  // Timeline scroll activation
+  const years = document.querySelectorAll<HTMLElement>('.timeline-year');
+  const articleYears: number[] = years.length > 0
+    ? Array.from(years).map(y => parseInt(y.dataset.year || '0'))
+    : [];
+
+  if (articleYears.length > 0) {
+    // Activate years as user scrolls through article
+    const articleContent = document.querySelector('.article-content');
+    if (articleContent) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const ratio = entry.intersectionRatio;
+            const activeIndex = Math.floor(ratio * articleYears.length);
+            years.forEach((y, i) => {
+              y.classList.toggle('active', i <= activeIndex);
+            });
+          }
+        });
+      }, { threshold: Array.from({length: 20}, (_, i) => i / 20) });
+
+      observer.observe(articleContent);
+    }
+  }
+
+  // Newsletter form
+  const form = document.getElementById('nl-form-article');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = form.querySelector('input[type="email"]') as HTMLInputElement;
+    const email = input?.value;
+    if (!email) return;
+
+    const endpoint = document.documentElement.lang === 'es'
+      ? '/webhook/subscribe-es'
+      : '/webhook/subscribe-en';
+
+    try {
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      input.value = '';
+      input.placeholder = '✓ Subscribed';
+    } catch {
+      input.placeholder = 'Try again';
+    }
+  });
+</script>
