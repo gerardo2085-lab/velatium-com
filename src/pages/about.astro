@@ -1,0 +1,321 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+
+const year = new Date().getFullYear();
+---
+
+<Base
+  title="About"
+  description="The Velatium is a documentary-style history media brand covering suppressed history, lost civilizations, Cold War politics, and the truth about how power shapes the historical record."
+>
+  <Nav />
+
+  <header class="hero">
+    <p class="hero-eyebrow">What The Velatium Is</p>
+    <h1 class="hero-title">
+      This is not a history channel.
+      <em>It is a truth-recovery operation.</em>
+    </h1>
+    <p class="hero-lead">
+      History is written by the institutions that survive. Archives are declassified decades later.
+      The gap between the official record and what actually happened — that gap is where The Velatium lives.
+      Every episode. Every article. Every word.
+    </p>
+  </header>
+
+  <div class="content">
+
+    <div class="divider"></div>
+
+    <section>
+      <p class="sec-label">Quick Answer</p>
+      <p class="sec-body reveal">
+        <strong>The Velatium is a documentary-style history media brand</strong> that covers suppressed history, lost civilizations, Cold War politics, and the intersection of religious institutions and political power. Content is produced in English and Spanish, sourced from primary archives, and structured to meet the factual standards of investigative journalism — not opinion media.
+      </p>
+    </section>
+
+    <div class="divider"></div>
+
+    <section>
+      <div class="doctrine reveal">
+        <div class="doctrine-line"></div>
+        <div class="doctrine-body">
+          <p class="doctrine-tag">Editorial Law — Non-Negotiable</p>
+          <p class="doctrine-quote">"Neutral with the facts. Never neutral with the pain."</p>
+          <p class="doctrine-explain">
+            Official data is always a state claim. Lived reality is always the counter-evidence. <strong>The gap between them is the story.</strong> Clinical distance toward human suffering is not objectivity — it is a choice to protect the powerful. The Velatium names the deaths. Names the hunger. Says what the system did to real bodies in real places. It does not editorialize about political sides. It presents what happened and lets the weight of documented reality do the work.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section>
+      <p class="sec-label reveal">Four Pillars</p>
+      <h2 class="sec-title reveal">What The Velatium covers — and why each pillar exists.</h2>
+
+      <div class="pillars">
+        <div class="pillar reveal">
+          <div class="pillar-name">Latinoamérica Sin Censura</div>
+          <p class="pillar-desc">The uncensored political and human history of Latin America and the Caribbean. Cuba, Venezuela, Nicaragua, Argentina, Chile. Not ideological analysis — documented consequence. The only pillar produced in Spanish.</p>
+        </div>
+        <div class="pillar reveal">
+          <div class="pillar-name">Forbidden History</div>
+          <p class="pillar-desc">History suppressed, rewritten, or ignored by mainstream institutions. Operation Paperclip. MKUltra. The real history of the CIA. Events that happened, were documented, and then quietly buried.</p>
+        </div>
+        <div class="pillar reveal">
+          <div class="pillar-name">Lost Civilizations</div>
+          <p class="pillar-desc">The rise and catastrophic collapse of the world's greatest civilizations. What they built, what destroyed them, and what they knew that we have forgotten. Ancient Sumer. The Bronze Age Collapse. Carthage.</p>
+        </div>
+        <div class="pillar reveal">
+          <div class="pillar-name">God &amp; Power</div>
+          <p class="pillar-desc">The intersection of religious institutions and political power throughout human history. Not anti-religion. Ruthlessly honest about how faith gets weaponized — from Nicaea to the Crusades to the Vatican's financial empire.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section>
+      <p class="sec-label reveal">The Standard</p>
+      <h2 class="sec-title reveal">How every piece of content is built.</h2>
+      <p class="sec-body reveal">Every episode begins in an archive — declassified documents, academic sources, primary records. Claims without sources do not appear. <strong>Official data is always presented as a state claim, not as fact</strong>, and always alongside the evidence that contradicts it. The gap between the two is where the editorial work happens.</p>
+      <p class="sec-body reveal">Scripts are causal chains. Every sentence must advance cause to consequence or it is cut. Hooks attack beliefs the viewer already holds — because the only history worth covering is history that changes how you understand the present. The last line of every episode is the most powerful line, because that is what the viewer carries out of the room.</p>
+      <p class="sec-body reveal"><strong>AEO compliance:</strong> Every article published on thevelatium.com is structured to be cited by AI engines — ChatGPT, Perplexity, Google AI Overviews, Claude. Declarative language. Specific figures. Sourced claims. The Velatium is built to become the source AI systems reach for on these topics.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <div class="closing reveal">
+      <span class="closing-glyph">✦</span>
+      <h3 class="closing-title">The history they buried. The truth you deserve.</h3>
+      <p class="closing-sub">One story per week. Archive-sourced. Bilingual. Free. The Velatium Chronicle arrives every week — no algorithm between you and the record.</p>
+      <a href="/subscribe" class="closing-btn">Join the Chronicle</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <span class="footer-brand">The Velatium</span>
+    <ul class="footer-links">
+      <li><a href="/archive">Archive</a></li>
+      <li><a href="/subscribe">Subscribe</a></li>
+      <li><a href="/books">Books</a></li>
+      <li><a href="https://www.youtube.com/@TheVelatium" target="_blank" rel="noopener">YouTube</a></li>
+    </ul>
+    <span class="footer-copy">© {year} The Velatium. All rights reserved.</span>
+  </footer>
+
+</Base>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+<style>
+  .hero {
+    padding: 120px 80px 80px;
+    position: relative;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 60px; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(200,169,81,0.04) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-family: var(--lato); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.42em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.8; margin-bottom: 24px;
+  }
+  .hero-title {
+    font-family: var(--cinzel);
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 700; color: var(--text);
+    line-height: 1.05; letter-spacing: 0.02em;
+    margin-bottom: 32px;
+  }
+  .hero-title em { color: var(--gold); font-style: normal; display: block; }
+  .hero-lead {
+    font-family: var(--lato);
+    font-size: clamp(16px, 1.8vw, 19px);
+    color: rgba(232,224,208,0.75);
+    line-height: 1.9;
+    max-width: 680px;
+  }
+
+  .content {
+    padding: 0 80px 100px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .divider {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(to right, rgba(200,169,81,0.4) 0%, transparent 80%);
+    margin: 60px 0;
+  }
+
+  .doctrine {
+    display: grid;
+    grid-template-columns: 3px 1fr;
+    gap: 0 32px;
+    margin: 48px 0;
+    max-width: 800px;
+    width: 100%;
+    text-align: left;
+  }
+  .doctrine-line { background: var(--red); border-radius: 2px; }
+  .doctrine-tag {
+    font-family: var(--lato); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.38em; text-transform: uppercase;
+    color: var(--red); margin-bottom: 12px;
+  }
+  .doctrine-quote {
+    font-family: var(--cinzel);
+    font-size: clamp(18px, 2.2vw, 26px);
+    font-weight: 600; color: var(--text);
+    line-height: 1.35; letter-spacing: 0.02em;
+    margin-bottom: 20px;
+  }
+  .doctrine-explain {
+    font-family: var(--lato);
+    font-size: 15px; color: var(--muted2);
+    line-height: 1.85;
+  }
+  .doctrine-explain strong { color: var(--text); }
+
+  .sec-label {
+    font-family: var(--lato); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.38em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 20px;
+    text-align: center;
+  }
+  .sec-title {
+    font-family: var(--cinzel);
+    font-size: clamp(18px, 2.2vw, 26px);
+    font-weight: 600; color: var(--text);
+    line-height: 1.3; letter-spacing: 0.02em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .sec-body {
+    font-family: var(--lato);
+    font-size: 15px; color: rgba(232,224,208,0.72);
+    line-height: 1.85; margin-bottom: 16px;
+    max-width: 680px;
+    text-align: left;
+  }
+  .sec-body strong { color: var(--text); }
+
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    margin: 32px 0;
+    width: 100%;
+  }
+  .pillar {
+    background: #0F0F12;
+    border: 1px solid rgba(200,169,81,0.1);
+    padding: 28px 24px;
+    transition: border-color var(--t);
+    text-align: left;
+  }
+  .pillar:hover { border-color: rgba(200,169,81,0.35); }
+  .pillar-name {
+    font-family: var(--cinzel); font-size: 13px; font-weight: 600;
+    color: var(--gold); letter-spacing: 0.05em; margin-bottom: 8px;
+  }
+  .pillar-desc {
+    font-family: var(--lato); font-size: 13px;
+    color: var(--muted2); line-height: 1.6;
+  }
+
+  .closing {
+    background: #0D0B14;
+    border: 1px solid rgba(200,169,81,0.15);
+    padding: 52px 48px;
+    margin-top: 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+  }
+  .closing::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(200,169,81,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .closing-glyph {
+    font-size: 24px; color: var(--gold);
+    display: block; margin-bottom: 20px; opacity: 0.7;
+  }
+  .closing-title {
+    font-family: var(--cinzel);
+    font-size: clamp(18px, 2.5vw, 26px);
+    font-weight: 700; color: var(--text);
+    margin-bottom: 12px; letter-spacing: 0.03em;
+  }
+  .closing-sub {
+    font-family: var(--lato); font-size: 15px;
+    color: var(--muted2); line-height: 1.65;
+    max-width: 480px; margin: 0 auto 32px;
+  }
+  .closing-btn {
+    display: inline-block;
+    background: var(--red); color: #fff;
+    font-family: var(--cinzel); font-size: 12px;
+    font-weight: 600; letter-spacing: 0.15em;
+    text-transform: uppercase; text-decoration: none;
+    padding: 14px 36px;
+    transition: background var(--t), transform var(--t);
+  }
+  .closing-btn:hover { background: #a93226; transform: translateY(-1px); }
+
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity 700ms ease, transform 700ms ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  footer {
+    border-top: 1px solid rgba(200,169,81,0.12);
+    padding: 36px 40px;
+    display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 16px;
+  }
+  .footer-brand {
+    font-family: var(--cinzel); font-size: 11px;
+    font-weight: 600; letter-spacing: 0.3em;
+    color: var(--gold); text-transform: uppercase;
+  }
+  .footer-links { display: flex; gap: 20px; list-style: none; flex-wrap: wrap; }
+  .footer-links a {
+    font-family: var(--lato); font-size: 12px;
+    color: var(--muted); text-decoration: none; transition: color var(--t);
+  }
+  .footer-links a:hover { color: var(--gold); }
+  .footer-copy { font-family: var(--lato); font-size: 11px; color: var(--muted); }
+
+  @media (max-width: 768px) {
+    .hero { padding: 100px 24px 60px; }
+    .content { padding: 0 24px 80px; }
+    .pillars { grid-template-columns: 1fr; }
+    .closing { padding: 40px 24px; }
+    footer { flex-direction: column; text-align: center; padding: 32px 24px; }
+  }
+</style>
