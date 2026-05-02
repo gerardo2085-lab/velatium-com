@@ -1,0 +1,440 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import type { Episode } from '../lib/episodes';
+
+// Load all episodes from content/episodes/*.json (excluding _latest)
+const episodeFiles = await Astro.glob('../../content/episodes/*.json');
+const episodes: Episode[] = episodeFiles
+  .map(f => f.default as Episode)
+  .filter(ep => ep.slug && !ep.slug.startsWith('_'))
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+const year = new Date().getFullYear();
+---
+
+<Base title="Archive" description="Every episode. Every pillar. Searchable and filterable.">
+  <Nav />
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <p class="sidebar-eyebrow">The Velatium</p>
+        <h1 class="sidebar-title">The Archive</h1>
+      </div>
+
+      <p class="sidebar-section-label">Pillar</p>
+      <div class="filter-list">
+        <button class="filter-item active" data-pillar="all">All</button>
+        <button class="filter-item" data-pillar="latin-america">Latinoamérica</button>
+        <button class="filter-item" data-pillar="forbidden-history">Forbidden History</button>
+        <button class="filter-item" data-pillar="lost-civilizations">Lost Civilizations</button>
+        <button class="filter-item" data-pillar="god-power">God &amp; Power</button>
+      </div>
+
+      <div class="sidebar-search">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" class="search-input" id="searchInput"
+            placeholder="Search the archive…" autocomplete="off">
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <div class="results-bar">
+        <p class="results-count"><em id="resultCount">{episodes.length}</em> episodes</p>
+        <button class="clear-btn" id="clearBtn">✕ Clear</button>
+      </div>
+
+      <div class="grid" id="grid">
+        <!-- Cards rendered client-side for filtering -->
+        <div class="empty" id="emptyState">
+          <p class="empty-title">Nothing Found</p>
+          <p class="empty-sub">Try a different search or filter.</p>
+        </div>
+      </div>
+
+      <!-- Newsletter bar -->
+      <div class="nl-bar">
+        <div class="nl-bar-copy">
+          <strong>The Velatium Chronicle</strong>
+          <p>One story per week. The history books skipped it. We didn't.</p>
+        </div>
+        <a href="/subscribe" class="nl-bar-btn">Join the List</a>
+      </div>
+
+      <!-- Footer -->
+      <footer>
+        <div class="footer-brand">The Velatium</div>
+        <ul class="footer-links">
+          <li><a href="/archive">Archive</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/subscribe">Subscribe</a></li>
+          <li><a href="/books">Books</a></li>
+          <li><a href="https://www.youtube.com/@TheVelatium" target="_blank" rel="noopener">YouTube</a></li>
+        </ul>
+        <p class="footer-copy">© {year} The Velatium. All rights reserved.</p>
+      </footer>
+
+    </div>
+  </div>
+
+</Base>
+
+<!-- Pass episodes to client JS as JSON -->
+<script define:vars={{ episodes }}>
+  let activePillar = 'all';
+  let query = '';
+
+  // Read URL param ?pillar= on load
+  const params = new URLSearchParams(window.location.search);
+  const urlPillar = params.get('pillar');
+  if (urlPillar) {
+    activePillar = urlPillar;
+    const btn = document.querySelector(`[data-pillar="${urlPillar}"]`);
+    if (btn) {
+      document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  }
+
+  function buildCard(ep) {
+    const a = document.createElement('a');
+    a.className = 'card';
+    a.href = `/episodes/${ep.slug}`;
+
+    const mediaHTML = ep.thumbnail
+      ? `<img class="card-img" src="${ep.thumbnail}" alt="${ep.title}" loading="lazy">`
+      : `<div class="card-placeholder"></div>`;
+
+    a.innerHTML = `
+      ${mediaHTML}
+      <div class="card-overlay"></div>
+      <div class="card-line"></div>
+      <div class="card-text">
+        <div class="card-pillar">${ep.pillarLabel}</div>
+        <div class="card-title">${ep.title}</div>
+        <div class="card-meta">${ep.date} · ${ep.duration}</div>
+      </div>
+    `;
+    return a;
+  }
+
+  function render() {
+    const grid  = document.getElementById('grid');
+    const empty = document.getElementById('emptyState');
+    const count = document.getElementById('resultCount');
+    const clear = document.getElementById('clearBtn');
+
+    grid.querySelectorAll('.card').forEach(c => c.remove());
+    const q = query.toLowerCase().trim();
+
+    const filtered = episodes.filter(ep => {
+      const pillarOk = activePillar === 'all' || ep.pillar === activePillar;
+      const searchOk = !q || (ep.title + ep.pillarLabel).toLowerCase().includes(q);
+      return pillarOk && searchOk;
+    });
+
+    count.textContent = filtered.length;
+    clear.classList.toggle('show', activePillar !== 'all' || q.length > 0);
+
+    if (filtered.length === 0) {
+      empty.classList.add('show');
+    } else {
+      empty.classList.remove('show');
+      filtered.forEach(ep => grid.appendChild(buildCard(ep)));
+    }
+  }
+
+  document.querySelectorAll('.filter-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      activePillar = item.dataset.pillar;
+      render();
+    });
+  });
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    query = e.target.value;
+    render();
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    activePillar = 'all';
+    query = '';
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('[data-pillar="all"]').classList.add('active');
+    render();
+  });
+
+  // Nav scroll blur
+  const nav = document.getElementById('main-nav');
+  window.addEventListener('scroll', () => {
+    nav?.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  render();
+</script>
+
+<style>
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+    padding-top: 64px;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    padding: 48px 32px 48px 40px;
+    border-right: 1px solid rgba(200,169,81,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-header { margin-bottom: 48px; }
+
+  .sidebar-eyebrow {
+    font-family: var(--lato); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.42em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.7; margin-bottom: 16px;
+  }
+
+  .sidebar-title {
+    font-family: var(--cinzel); font-size: 28px; font-weight: 700;
+    color: var(--text); letter-spacing: 0.05em; line-height: 1.1;
+  }
+
+  .sidebar-section-label {
+    font-family: var(--lato); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.38em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 20px;
+  }
+
+  .filter-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .filter-item {
+    font-family: var(--cinzel); font-size: 17px; font-weight: 400;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted2); background: none; border: none;
+    border-left: 3px solid transparent;
+    padding: 10px 0 10px 16px;
+    cursor: pointer; text-align: left; line-height: 1.2;
+    transition: color 220ms ease, border-color 220ms ease;
+  }
+  .filter-item:hover { color: var(--text); }
+  .filter-item.active { color: var(--gold); border-left-color: var(--gold); }
+
+  .sidebar-search {
+    margin-top: auto;
+    padding-top: 40px;
+    border-top: 1px solid rgba(200,169,81,0.1);
+  }
+  .search-wrap { position: relative; }
+  .search-icon {
+    position: absolute; left: 0; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted); font-size: 14px; pointer-events: none;
+  }
+  .search-input {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 1px solid rgba(200,169,81,0.2);
+    padding: 8px 0 8px 24px;
+    font-family: var(--lato); font-size: 13px;
+    color: var(--text); outline: none; letter-spacing: 0.04em;
+    transition: border-color 220ms ease;
+  }
+  .search-input::placeholder { color: var(--muted); font-size: 12px; }
+  .search-input:focus { border-bottom-color: var(--gold); }
+
+  /* ── CONTENT ── */
+  .content { display: flex; flex-direction: column; }
+
+  .results-bar {
+    padding: 20px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(200,169,81,0.08);
+  }
+  .results-count {
+    font-family: var(--lato); font-size: 11px;
+    color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .results-count em { color: var(--gold); font-style: normal; font-weight: 700; }
+  .clear-btn {
+    font-family: var(--lato); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); background: none; border: none;
+    cursor: pointer; transition: color 220ms ease; display: none;
+  }
+  .clear-btn:hover { color: var(--gold); }
+  .clear-btn.show { display: block; }
+
+  /* ── CARD GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    flex: 1;
+  }
+
+  :global(.card) {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    background: #111;
+  }
+
+  :global(.card-img) {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 500ms ease, filter 400ms ease;
+    filter: brightness(0.8) saturate(0.85);
+  }
+  :global(.card:hover .card-img) {
+    transform: scale(1.04);
+    filter: brightness(0.6) saturate(0.75);
+  }
+
+  :global(.card-placeholder) {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #0f0f14 0%, #1a0f2e 60%, #0a0a0a 100%);
+    transition: filter 400ms ease;
+  }
+  :global(.card:hover .card-placeholder) { filter: brightness(0.7); }
+
+  :global(.card-overlay) {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%);
+    transition: background 220ms ease;
+  }
+  :global(.card:hover .card-overlay) {
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 45%, rgba(0,0,0,0.3) 75%, rgba(0,0,0,0.1) 100%);
+  }
+
+  :global(.card-text) {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 24px 24px 22px;
+  }
+  :global(.card-pillar) {
+    font-family: var(--lato); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 8px;
+  }
+  :global(.card-title) {
+    font-family: var(--cinzel); font-size: clamp(16px, 1.6vw, 24px);
+    font-weight: 600; color: #fff; line-height: 1.25;
+    letter-spacing: 0.01em; margin-bottom: 10px;
+  }
+  :global(.card-meta) {
+    font-family: var(--lato); font-size: 12px;
+    color: rgba(232,224,208,0.55); letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  :global(.card-line) {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; background: var(--gold);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 350ms ease;
+  }
+  :global(.card:hover .card-line) { transform: scaleX(1); }
+
+  /* ── EMPTY ── */
+  .empty {
+    grid-column: 1 / -1;
+    padding: 100px 48px; text-align: center; display: none;
+  }
+  .empty.show { display: block; }
+  .empty-title {
+    font-family: var(--cinzel); font-size: 18px;
+    color: var(--muted2); letter-spacing: 0.08em; margin-bottom: 10px;
+  }
+  .empty-sub {
+    font-family: var(--lato); font-size: 14px;
+    color: var(--muted); font-style: italic;
+  }
+
+  /* ── NEWSLETTER BAR ── */
+  .nl-bar {
+    padding: 32px 40px; background: var(--purple);
+    border-top: 1px solid rgba(200,169,81,0.15);
+    border-left: 3px solid var(--gold);
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 32px; flex-wrap: wrap;
+  }
+  .nl-bar-copy strong {
+    font-family: var(--cinzel); font-size: 14px; font-weight: 600;
+    color: var(--text); letter-spacing: 0.04em; display: block; margin-bottom: 6px;
+  }
+  .nl-bar-copy p {
+    font-family: var(--lato); font-size: 13px; color: var(--muted2); line-height: 1.5;
+  }
+  .nl-bar-btn {
+    flex-shrink: 0; background: var(--red); border: none;
+    padding: 12px 28px; font-family: var(--lato); font-size: 11px;
+    font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #fff; cursor: pointer; text-decoration: none;
+    display: inline-block; transition: background 220ms ease;
+  }
+  .nl-bar-btn:hover { background: #a23226; }
+
+  footer {
+    padding: 36px 40px; text-align: center;
+    border-top: 1px solid rgba(200,169,81,0.1);
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .footer-brand {
+    font-family: var(--cinzel); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.32em; color: var(--gold); text-transform: uppercase;
+  }
+  .footer-links {
+    display: flex; gap: 20px; list-style: none; flex-wrap: wrap; justify-content: center;
+  }
+  .footer-links a {
+    font-family: var(--lato); font-size: 11px; color: var(--muted);
+    text-decoration: none; transition: color 220ms ease;
+  }
+  .footer-links a:hover { color: var(--gold); }
+  .footer-copy { font-family: var(--lato); font-size: 10px; color: var(--muted); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static; height: auto;
+      padding: 32px 24px 24px; border-right: none;
+      border-bottom: 1px solid rgba(200,169,81,0.1);
+    }
+    .sidebar-header { margin-bottom: 28px; }
+    .filter-list { flex-direction: row; flex-wrap: wrap; gap: 0; }
+    .filter-item {
+      border-left: none; border-bottom: 2px solid transparent;
+      padding: 8px 16px 8px 0; margin-right: 8px; font-size: 12px;
+    }
+    .filter-item.active { border-left-color: transparent; border-bottom-color: var(--gold); }
+    .sidebar-search { margin-top: 24px; padding-top: 24px; }
+    .grid { grid-template-columns: 1fr; }
+    .nl-bar { flex-direction: column; gap: 16px; padding: 24px; }
+    .nl-bar-btn { width: 100%; text-align: center; }
+  }
+  @media (max-width: 768px) {
+    nav { padding: 0 24px; }
+  }
+  @media (min-width: 901px) and (max-width: 1100px) {
+    .layout { grid-template-columns: 220px 1fr; }
+    .filter-item { font-size: 13px; }
+  }
+</style>
