@@ -1,0 +1,310 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+
+const year = new Date().getFullYear();
+---
+
+<Base
+  title="Books"
+  description="Archive-sourced nonfiction. Historical fiction built from the same records. Two catalogs. One standard."
+>
+  <Nav />
+
+  <header class="page-header">
+    <p class="page-eyebrow">The Velatium · Published Works</p>
+    <h1 class="page-title">The Books</h1>
+    <p class="page-sub">Archive-sourced nonfiction. Historical fiction built from the same records. Two catalogs. One standard.</p>
+  </header>
+
+  <!-- NONFICTION -->
+  <div class="section-head">
+    <div class="section-line gold"></div>
+    <span class="section-label gold">Nonfiction</span>
+    <div class="section-line gold"></div>
+  </div>
+
+  <div class="book-card reveal">
+    <div class="book-cover-wrap">
+      <img src="/images/books/cuba-book.jpeg" alt="The Island That Swallowed Its Children" />
+    </div>
+    <div class="book-info">
+      <div class="book-series">The Velatium · History Uncovered</div>
+      <h2 class="book-title">The Island That Swallowed Its Children</h2>
+      <div class="book-author">The Velatium</div>
+      <div class="book-rule"></div>
+      <p class="book-desc">Castro, Cuba, and the price of a revolution that never ended. Before 1959, Cuba ranked second in Latin America by per capita income — more doctors per capita than France. What Castro inherited was not a failed state. What he built was one. Sourced from declassified documents, survivor testimony, and Cuban government data set against lived reality.</p>
+      <div class="book-meta">
+        <span class="meta-item"><strong>Ebook</strong> $4.99</span>
+        <span class="meta-item"><strong>Paperback</strong> $14.99</span>
+        <span class="meta-item">Spanish</span>
+        <span class="meta-item">Available Now</span>
+      </div>
+      <a class="book-btn" href="https://a.co/d/01bFuDNp" target="_blank" rel="noopener">Read on Amazon →</a>
+    </div>
+  </div>
+
+  <!-- FICTION -->
+  <div class="section-head">
+    <div class="section-line purple"></div>
+    <span class="section-label purple">Fiction</span>
+    <div class="section-line purple"></div>
+  </div>
+
+  <div class="book-card fiction-card reveal">
+    <div class="book-cover-wrap">
+      <img src="/images/books/havana-protocol.jpeg" alt="The Havana Protocol" />
+    </div>
+    <div class="book-info">
+      <div class="book-series">Cold War Hearts · Book 1 · Alma Voss</div>
+      <h2 class="book-title">The Havana Protocol</h2>
+      <div class="book-author">Alma Voss</div>
+      <div class="book-rule"></div>
+      <p class="book-desc">Havana, 1961. A Soviet double agent. A CIA handler. A city on the edge of history. Marta Sokolova has one mission and one rule: never feel anything. When she meets Daniel Reyes on the Malecón, neither is who they claim to be. The word "love" is never spoken. But everything depends on it.</p>
+      <div class="book-meta">
+        <span class="meta-item"><strong>Ebook</strong> $4.99</span>
+        <span class="meta-item"><strong>Paperback</strong> $14.99</span>
+        <span class="meta-item">65,500 words</span>
+        <span class="meta-item">Available Now</span>
+      </div>
+      <a class="book-btn" href="https://a.co/d/01bFuDNp" target="_blank" rel="noopener">Read on Amazon →</a>
+    </div>
+  </div>
+
+  <div class="book-card fiction-card reveal">
+    <div class="book-cover-wrap">
+      <div class="cover-coming">
+        <img src="/images/books/vienna-cipher.png" alt="The Vienna Cipher" />
+        <div class="cover-badge">Coming 2026</div>
+      </div>
+    </div>
+    <div class="book-info">
+      <div class="book-series">Cold War Hearts · Book 2 · Alma Voss</div>
+      <h2 class="book-title">The Vienna Cipher</h2>
+      <div class="book-author">Alma Voss</div>
+      <div class="book-rule"></div>
+      <p class="book-desc">Vienna, August 12–14, 1961. The Berlin Wall goes up. Marta Sokolova and James Calloway — a burned-out MI6 handler with nothing left to lose — have 72 hours. Colder than The Havana Protocol. More cerebral. Set before it. Three days that change everything.</p>
+      <div class="book-meta">
+        <span class="meta-item">In Production</span>
+        <span class="meta-item">2026</span>
+      </div>
+      <div class="soon-label">Coming Soon</div>
+    </div>
+  </div>
+
+  <footer>
+    <span class="footer-brand">The Velatium</span>
+    <ul class="footer-links">
+      <li><a href="/archive">Archive</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/subscribe">Subscribe</a></li>
+      <li><a href="https://www.youtube.com/@TheVelatium" target="_blank" rel="noopener">YouTube</a></li>
+    </ul>
+    <span class="footer-copy">© {year} The Velatium · Alma Voss. All rights reserved.</span>
+  </footer>
+
+</Base>
+
+<script>
+  const nav = document.getElementById('main-nav');
+  window.addEventListener('scroll', () => {
+    nav?.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+<style>
+  .page-header {
+    padding: 110px 80px 64px;
+    text-align: center;
+    border-bottom: 1px solid rgba(200,169,81,0.1);
+    position: relative;
+  }
+  .page-header::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(200,169,81,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .page-eyebrow {
+    font-family: var(--lato); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.42em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px;
+  }
+  .page-title {
+    font-family: var(--cinzel); font-size: clamp(40px, 6vw, 72px);
+    font-weight: 700; color: var(--text); line-height: 1.05;
+    letter-spacing: 0.03em; margin-bottom: 18px;
+  }
+  .page-sub {
+    font-family: var(--lato); font-size: 17px; color: var(--muted2);
+    line-height: 1.7; max-width: 520px; margin: 0 auto;
+  }
+
+  .section-head {
+    display: flex; align-items: center;
+    padding: 64px 80px 52px;
+  }
+  .section-line { height: 1px; flex: 1; }
+  .section-line.gold { background: rgba(200,169,81,0.35); }
+  .section-line.purple { background: rgba(176,136,204,0.35); }
+  .section-label {
+    font-family: var(--cinzel); font-size: clamp(24px, 3vw, 40px);
+    font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 0 36px;
+  }
+  .section-label.gold { color: var(--gold); }
+  .section-label.purple { color: #b088cc; }
+
+  .book-card {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    border-top: 1px solid rgba(200,169,81,0.08);
+    border-bottom: 1px solid rgba(200,169,81,0.08);
+    margin-bottom: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .book-card.fiction-card { border-color: rgba(176,136,204,0.08); }
+
+  .book-card::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 40% 70% at 0% 50%, rgba(200,169,81,0.04) 0%, transparent 60%);
+    opacity: 0; transition: opacity 500ms ease; pointer-events: none;
+  }
+  .book-card:hover::after { opacity: 1; }
+  .fiction-card::after {
+    background: radial-gradient(ellipse 40% 70% at 0% 50%, rgba(176,136,204,0.05) 0%, transparent 60%) !important;
+  }
+
+  .book-cover-wrap {
+    padding: 56px 32px 56px 80px;
+    display: flex; align-items: center;
+  }
+  .book-cover-wrap img {
+    width: 220px; height: auto; display: block;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.75), 0 4px 24px rgba(0,0,0,0.5);
+    transition: transform 500ms ease, box-shadow 500ms ease;
+  }
+  .book-card:hover .book-cover-wrap img {
+    transform: translateY(-8px) rotate(-1.5deg);
+    box-shadow: 0 40px 90px rgba(0,0,0,0.85), 0 8px 32px rgba(200,169,81,0.18);
+  }
+  .fiction-card:hover .book-cover-wrap img {
+    box-shadow: 0 40px 90px rgba(0,0,0,0.85), 0 8px 32px rgba(176,136,204,0.18);
+  }
+
+  .cover-coming { position: relative; display: inline-block; }
+  .cover-coming img { opacity: 0.4; filter: grayscale(20%); }
+  .cover-badge {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--cinzel); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text); background: rgba(10,10,10,0.9);
+    border: 1px solid rgba(200,169,81,0.4);
+    padding: 10px 18px; white-space: nowrap;
+  }
+
+  .book-info {
+    padding: 56px 80px 56px 48px;
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative;
+  }
+  .book-info::before {
+    content: ''; position: absolute;
+    left: 0; top: 56px; bottom: 56px; width: 2px;
+    background: linear-gradient(to bottom, transparent, rgba(200,169,81,0.45), transparent);
+  }
+  .fiction-card .book-info::before {
+    background: linear-gradient(to bottom, transparent, rgba(176,136,204,0.45), transparent);
+  }
+
+  .book-series {
+    font-family: var(--lato); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.38em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 18px;
+  }
+  .fiction-card .book-series { color: #b088cc; }
+
+  .book-title {
+    font-family: var(--cinzel); font-size: clamp(30px, 3.8vw, 52px);
+    font-weight: 700; color: var(--text);
+    line-height: 1.08; letter-spacing: 0.02em; margin-bottom: 12px;
+  }
+  .book-author {
+    font-family: var(--lato); font-size: 16px;
+    font-style: italic; color: var(--muted2); margin-bottom: 28px;
+  }
+  .book-rule { width: 56px; height: 1px; background: rgba(200,169,81,0.45); margin-bottom: 28px; }
+  .fiction-card .book-rule { background: rgba(176,136,204,0.45); }
+
+  .book-desc {
+    font-family: var(--lato); font-size: 16px;
+    color: rgba(232,224,208,0.68); line-height: 1.9;
+    margin-bottom: 32px; max-width: 560px;
+  }
+  .book-meta { display: flex; gap: 28px; margin-bottom: 36px; flex-wrap: wrap; }
+  .meta-item { font-family: var(--lato); font-size: 12px; letter-spacing: 0.08em; color: var(--muted); }
+  .meta-item strong { color: var(--text); font-weight: 700; }
+
+  .book-btn {
+    display: inline-block; background: var(--red); color: #fff;
+    font-family: var(--cinzel); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none;
+    padding: 16px 40px; align-self: flex-start;
+    transition: background 220ms ease, transform 220ms ease;
+  }
+  .book-btn:hover { background: #a93226; transform: translateY(-2px); }
+
+  .soon-label {
+    font-family: var(--cinzel); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.1); padding: 16px 40px;
+    display: inline-block; align-self: flex-start;
+  }
+
+  /* REVEAL */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 700ms ease, transform 700ms ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  footer {
+    border-top: 1px solid rgba(200,169,81,0.12);
+    padding: 40px; display: flex;
+    justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px; margin-top: 60px;
+  }
+  .footer-brand {
+    font-family: var(--cinzel); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase;
+  }
+  .footer-links { display: flex; gap: 20px; list-style: none; flex-wrap: wrap; }
+  .footer-links a {
+    font-family: var(--lato); font-size: 12px; color: var(--muted);
+    text-decoration: none; transition: color 220ms ease;
+  }
+  .footer-links a:hover { color: var(--gold); }
+  .footer-copy { font-family: var(--lato); font-size: 11px; color: var(--muted); }
+
+  @media (max-width: 960px) {
+    .book-card { grid-template-columns: 1fr; }
+    .book-cover-wrap { padding: 48px 40px 24px; justify-content: center; }
+    .book-cover-wrap img { width: 180px; }
+    .book-info { padding: 24px 40px 52px; }
+    .book-info::before { display: none; }
+    .section-head { padding: 52px 40px 40px; }
+    .page-header { padding: 90px 40px 52px; }
+  }
+  @media (max-width: 768px) {
+    nav { padding: 0 24px; }
+    .book-cover-wrap { padding: 40px 24px 20px; }
+    .book-info { padding: 20px 24px 44px; }
+    .section-head { padding: 44px 24px 36px; }
+    .page-header { padding: 88px 24px 44px; }
+    footer { flex-direction: column; text-align: center; padding: 32px 24px; }
+  }
+</style>
