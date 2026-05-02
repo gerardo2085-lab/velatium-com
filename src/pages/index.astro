@@ -1,0 +1,582 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import type { Episode } from '../lib/episodes';
+
+// Load latest episode for episode bar + map
+let latest: Partial<Episode> = {
+  slug: 'cuba-antes-de-castro',
+  title: 'Cuba Antes de Castro — El País Que Nadie Te Mostró',
+  pillarLabel: 'Latinoamérica Sin Censura',
+  duration: '42 min',
+  lat: 22.0,
+  lng: -79.5,
+  thumbnail: '/images/episodes/cuba-antes-de-castro.jpeg',
+};
+
+try {
+  const raw = await import('../../content/episodes/_latest.json');
+  latest = raw.default;
+} catch (_) {}
+
+const episodeUrl = `/episodes/${latest.slug}`;
+const epLat = latest.lat ?? 22.0;
+const epLng = latest.lng ?? -79.5;
+const epTitle = latest.title ?? '';
+---
+
+<Base
+  title="The Velatium"
+  description="The history they buried. The truth you deserve."
+  includeD3={true}
+>
+  <Nav />
+
+  <!-- HERO — two column: headline left, map right -->
+  <section class="hero" id="hero">
+
+    <!-- LEFT — headline -->
+    <div class="hero-left">
+      <h1 class="hero-headline" id="headline" aria-label="The history they buried. The truth you deserve.">
+        <span class="hero-line" id="line1"></span>
+        <span class="hero-line" id="line2"></span>
+      </h1>
+      <p class="hero-sub" id="subline">Governments change it. Institutions bury it. We find it.</p>
+      <p class="hero-proof" id="proof">Archive-based research · Bilingual EN/ES · New episode weekly</p>
+      <a href="/subscribe" class="hero-cta" id="cta">Join the List</a>
+    </div>
+
+    <!-- RIGHT — map panel -->
+    <div class="hero-map-bg" id="mapPanel">
+      <svg id="map-svg" style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 960 540" preserveAspectRatio="xMidYMid meet">
+        <rect width="960" height="540" fill="#111"/>
+        <g id="countries"></g>
+      </svg>
+      <div class="dot-wrapper" id="dot" style="position:absolute;transform:translate(-50%,-50%);opacity:0;pointer-events:none;z-index:9;">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="dot-core"></div>
+        <div class="ep-label">
+          <span class="ep-label-title" id="epLabel">{epTitle}</span>
+        </div>
+      </div>
+      <canvas id="glowCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:5;"></canvas>
+      <div class="hero-grain" id="grain"></div>
+    </div>
+
+  </section>
+
+  <!-- EPISODE BAR -->
+  <a href={episodeUrl} class="episode-bar">
+    <div class="ep-thumb" style={latest.thumbnail ? `background-image:url('${latest.thumbnail}');background-size:cover;background-position:center;` : ''}></div>
+    <div class="ep-body">
+      <div class="ep-badge">New Episode</div>
+      <div class="ep-title">{latest.title}</div>
+      <div class="ep-meta">{latest.duration} · {latest.pillarLabel}</div>
+    </div>
+    <div class="ep-play">
+      <svg width="13" height="13" viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21" fill="#C8A951"/></svg>
+    </div>
+  </a>
+
+  <!-- FOUR PILLAR CARDS -->
+  <section class="pillars">
+    <a href="/archive?pillar=latin-america" class="pillar-card" style="background-image:url('/images/pillars/latinoamerica.jpeg');background-size:cover;background-position:center;">
+      <div class="pillar-label">Latinoamérica Sin Censura</div>
+      <div class="pillar-title">The uncensored political history of Latin America and the Caribbean.</div>
+    </a>
+    <a href="/archive?pillar=forbidden-history" class="pillar-card" style="background-image:url('/images/pillars/forbidden-history.jpeg');background-size:cover;background-position:center;">
+      <div class="pillar-label">Forbidden History</div>
+      <div class="pillar-title">What institutions rewrote. What archives reveal.</div>
+    </a>
+    <a href="/archive?pillar=lost-civilizations" class="pillar-card" style="background-image:url('/images/pillars/lost-civilizations.jpeg');background-size:cover;background-position:center;">
+      <div class="pillar-label">Lost Civilizations</div>
+      <div class="pillar-title">They built empires. Then vanished. We ask why.</div>
+    </a>
+    <a href="/archive?pillar=god-power" class="pillar-card" style="background-image:url('/images/pillars/god-and-power.jpeg');background-size:cover;background-position:center;">
+      <div class="pillar-label">God &amp; Power</div>
+      <div class="pillar-title">How faith became the oldest weapon of control.</div>
+    </a>
+  </section>
+
+  <Footer />
+
+</Base>
+
+<!-- Pass episode coords to client JS -->
+<script define:vars={{ epLat, epLng, epTitle }}>
+  /* ── HERO WORD ANIMATION ── */
+  document.body.classList.add('js-ready');
+
+  const line1Words = ['The', 'history', 'they', 'buried.'];
+  const line2Words = ['The', 'truth', 'you', 'deserve.'];
+
+  function buildLine(el, words) {
+    words.forEach((word, i) => {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.textContent = word;
+      el.appendChild(span);
+      if (i < words.length - 1) el.appendChild(document.createTextNode('\u00A0'));
+    });
+  }
+
+  buildLine(document.getElementById('line1'), line1Words);
+  buildLine(document.getElementById('line2'), line2Words);
+
+  const allWords = document.querySelectorAll('.word');
+  const subline  = document.getElementById('subline');
+  const proof    = document.getElementById('proof');
+  const cta      = document.getElementById('cta');
+  const total    = allWords.length;
+
+  setTimeout(() => {
+    allWords.forEach((word, i) => {
+      setTimeout(() => {
+        word.classList.add('visible');
+        if (i === total - 1) {
+          setTimeout(() => subline.classList.add('visible'), 300);
+          setTimeout(() => proof.classList.add('visible'), 500);
+          setTimeout(() => cta.classList.add('visible'), 750);
+        }
+      }, i * 250);
+    });
+  }, 200);
+
+  /* ── GRAIN PARALLAX ── */
+  const grain = document.getElementById('grain');
+  if (grain && window.matchMedia('(hover: hover)').matches) {
+    document.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth  - 0.5) * 3;
+      const y = (e.clientY / window.innerHeight - 0.5) * 3;
+      grain.style.backgroundPosition = `${x}px ${y}px`;
+    });
+  }
+
+  /* ── NAV SCROLL BLUR ── */
+  const nav = document.getElementById('main-nav');
+  window.addEventListener('scroll', () => {
+    nav?.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  /* ── D3 MAP ── */
+  const EPISODE_LOC = { title: epTitle, lat: epLat, lng: epLng };
+
+  const W = 960, H = 540;
+  const projection = d3.geoNaturalEarth1().scale(153).translate([W/2, H/2]);
+  const path = d3.geoPath().projection(projection);
+  const svg  = d3.select('#map-svg');
+  const g    = svg.select('#countries');
+
+  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(world => {
+    const countries = topojson.feature(world, world.objects.countries);
+
+    g.selectAll('path')
+      .data(countries.features)
+      .enter()
+      .append('path')
+      .attr('d', path)
+      .attr('fill', 'transparent')
+      .attr('stroke', '#C8A951')
+      .attr('stroke-width', '0.5')
+      .attr('opacity', '0.3')
+      .attr('cursor', 'default')
+      .style('transition', 'opacity 300ms ease, stroke-width 300ms ease')
+      .on('mouseover', function() {
+        d3.select(this).attr('opacity', '0.75').attr('stroke-width', '0.8');
+      })
+      .on('mouseout', function() {
+        d3.select(this).attr('opacity', '0.3').attr('stroke-width', '0.5');
+      });
+
+    const [px, py] = projection([EPISODE_LOC.lng, EPISODE_LOC.lat]);
+    const mapEl    = document.getElementById('mapPanel');
+    const dot      = document.getElementById('dot');
+
+    const endScale = 4.5;
+    const endTX    = (0.5 - (px/W) * endScale) * W;
+    const endTY    = (0.5 - (py/H) * endScale) * H;
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+    }
+
+    let startTime = null;
+    const duration = 3000;
+
+    function animate(ts) {
+      if (!startTime) startTime = ts;
+      const t = Math.min((ts - startTime) / duration, 1);
+      const e = easeInOutCubic(t);
+      const scale = 1 + (endScale - 1) * e;
+      const tx    = endTX * e;
+      const ty    = endTY * e;
+      g.attr('transform', `translate(${tx},${ty}) scale(${scale})`);
+      const sx = (px * scale + tx) / W * 100;
+      const sy = (py * scale + ty) / H * 100;
+      dot.style.left = sx + '%';
+      dot.style.top  = sy + '%';
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        dot.style.transition = 'opacity 0.6s ease';
+        dot.style.opacity = '1';
+      }
+    }
+
+    /* Radial glow canvas */
+    const canvas = document.getElementById('glowCanvas');
+    const ctx    = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width  = mapEl.offsetWidth;
+      canvas.height = mapEl.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    let mouseX = -999, mouseY = -999, isOver = false, glowOp = 0;
+
+    g.selectAll('path')
+      .on('mousemove', function(event) {
+        isOver = true;
+        const rect = mapEl.getBoundingClientRect();
+        mouseX = event.clientX - rect.left;
+        mouseY = event.clientY - rect.top;
+      })
+      .on('mouseleave', function() { isOver = false; });
+
+    function drawGlow() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const target = isOver ? 0.12 : 0;
+      glowOp += (target - glowOp) * 0.1;
+      if (glowOp > 0.005) {
+        const r = Math.min(canvas.width, canvas.height) * 0.22;
+        const grad = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, r);
+        grad.addColorStop(0,   `rgba(200,169,81,${glowOp})`);
+        grad.addColorStop(0.4, `rgba(200,169,81,${glowOp*0.4})`);
+        grad.addColorStop(1,   `rgba(200,169,81,0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      requestAnimationFrame(drawGlow);
+    }
+    drawGlow();
+
+    setTimeout(() => requestAnimationFrame(animate), 600);
+  });
+</script>
+
+<style>
+  /* ── NAV SCROLL STATE ── */
+  :global(nav.scrolled) {
+    backdrop-filter: blur(12px);
+    background: rgba(10,10,10,0.88) !important;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    height: calc(100svh - 64px);
+    max-height: 600px;
+    min-height: 420px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 42% 58%;
+  }
+
+  .hero-left {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 48px 40px 64px;
+    background: #111;
+  }
+
+  .hero-map-bg {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .hero-map-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(to right, rgba(10,10,10,0.6) 0%, transparent 30%),
+      linear-gradient(to top, rgba(10,10,10,0.3) 0%, transparent 40%);
+    z-index: 6;
+    pointer-events: none;
+  }
+
+  .hero-grain {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.045'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+    pointer-events: none;
+    z-index: 8;
+  }
+
+  .hero-headline {
+    font-family: var(--cinzel);
+    font-size: clamp(22px, 2.4vw, 44px);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.08;
+    letter-spacing: 0.01em;
+    margin-bottom: 20px;
+    will-change: transform, opacity;
+  }
+
+  :global(.word) {
+    display: inline-block;
+    opacity: 1;
+    transform: none;
+  }
+  .hero-line { display: block; }
+
+  :global(body.js-ready .word) {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+    will-change: transform, opacity;
+  }
+  :global(body.js-ready .word.visible) {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-sub {
+    font-family: var(--lato);
+    font-size: clamp(14px, 1.4vw, 17px);
+    font-style: italic;
+    color: var(--muted2);
+    line-height: 1.5;
+    margin-bottom: 8px;
+    opacity: 1;
+  }
+  :global(body.js-ready .hero-sub) {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  :global(body.js-ready .hero-sub.visible) {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-proof {
+    font-family: var(--lato);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 28px;
+    opacity: 1;
+  }
+  :global(body.js-ready .hero-proof) {
+    opacity: 0;
+    transition: opacity 0.6s ease 0.1s;
+  }
+  :global(body.js-ready .hero-proof.visible) { opacity: 1; }
+
+  .hero-cta {
+    display: inline-block;
+    background: var(--red);
+    color: #fff;
+    font-family: var(--lato);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    opacity: 1;
+    align-self: flex-start;
+    transition: background 200ms ease, transform 200ms ease;
+  }
+  :global(body.js-ready .hero-cta) {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.6s ease, transform 0.6s ease, background 200ms ease;
+  }
+  :global(body.js-ready .hero-cta.visible) {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .hero-cta:hover { background: #a93226; transform: translateY(-1px); }
+
+  /* ── MAP DOT ── */
+  .pulse-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(200,169,81,0.7);
+    animation: pulseRing 2.5s ease-out infinite;
+  }
+  .pulse-ring:nth-child(2) { animation-delay: 0.85s; }
+  .pulse-ring:nth-child(3) { animation-delay: 1.7s; }
+  @keyframes pulseRing {
+    0%   { transform: translate(-50%,-50%) scale(1); opacity: 0.9; }
+    100% { transform: translate(-50%,-50%) scale(9); opacity: 0; }
+  }
+  .dot-core {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #C8A951;
+    box-shadow: 0 0 10px 3px rgba(200,169,81,0.5);
+    position: relative; z-index: 2;
+  }
+  .ep-label {
+    position: absolute; top: 50%;
+    left: calc(50% + 14px);
+    transform: translateY(-50%);
+    white-space: nowrap;
+  }
+  .ep-label-title {
+    font-family: 'Georgia', serif;
+    font-size: 14px; font-style: italic;
+    color: rgba(232,224,208,0.95);
+    letter-spacing: 0.04em; display: block;
+  }
+
+  /* ── EPISODE BAR ── */
+  .episode-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: #111;
+    border-top: 1px solid rgba(200,169,81,0.15);
+    border-bottom: 1px solid rgba(200,169,81,0.15);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 200ms ease;
+  }
+  .episode-bar:hover { background: #161616; }
+
+  .ep-thumb {
+    width: 160px; height: 90px; flex-shrink: 0;
+    background: linear-gradient(135deg, #0f0f14, #1a0f2e);
+  }
+  .ep-body {
+    flex: 1; padding: 20px 32px;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .ep-badge {
+    font-family: var(--lato); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold);
+  }
+  .ep-title {
+    font-family: var(--cinzel);
+    font-size: clamp(14px, 1.8vw, 22px);
+    font-weight: 600; color: #fff; line-height: 1.2;
+  }
+  .ep-meta {
+    font-family: var(--lato); font-size: 11px;
+    color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .ep-play {
+    flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 32px;
+    transition: background 200ms ease, transform 200ms ease;
+  }
+  .episode-bar:hover .ep-play {
+    background: rgba(200,169,81,0.12);
+    transform: scale(1.08);
+  }
+
+  /* ── PILLARS ── */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
+  }
+  .pillar-card {
+    background: var(--purple);
+    border: 1px solid rgba(200,169,81,0.15);
+    padding: 32px 24px 36px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    transition: transform 200ms ease, border-color 200ms ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .pillar-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.5) 50%, rgba(10,10,10,0.3) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .pillar-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(200,169,81,0.07), transparent);
+    transition: left 400ms ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .pillar-card:hover { transform: translateY(-4px); border-color: rgba(200,169,81,0.6); }
+  .pillar-card:hover::before { left: 140%; }
+
+  .pillar-label, .pillar-title { position: relative; z-index: 1; }
+
+  .pillar-label {
+    font-family: var(--lato);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .pillar-title {
+    font-family: var(--cinzel);
+    font-size: clamp(14px, 1.5vw, 19px);
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; max-height: none; height: auto; }
+    .hero-left { padding: 40px 28px; min-height: 340px; }
+    .hero-map-bg { height: 280px; }
+    .ep-thumb { width: 100px; height: 70px; }
+    .ep-body { padding: 16px 20px; }
+    .ep-play { margin-right: 20px; }
+  }
+  @media (max-width: 768px) {
+    .pillars { grid-template-columns: repeat(2, 1fr); }
+    .pillar-card { padding: 24px 20px 28px; }
+  }
+  @media (max-width: 480px) {
+    .hero-left { padding: 48px 18px 40px; }
+    .pillars { grid-template-columns: 1fr 1fr; }
+    .pillar-card { padding: 20px 16px 24px; }
+    .pillar-title { font-size: 13px; }
+  }
+</style>
