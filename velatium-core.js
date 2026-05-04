@@ -1,11 +1,8 @@
 // velatium-core.js
-// Version: 1.1
-// Last updated: 2026-04-06
-// Deploys to: BOTH
-// Changes: Production build — reading time, progress bar, geo button highlight,
-//          live feed rendering, social proof counter, returning visitor recognition,
-//          scroll-triggered CTA ladder, related episodes engine,
-//          episode completion badges, dark mode toggle
+// Version: 1.2
+// Last updated: 2026-05-04
+// Deploys to: thevelatium.com (single domain, post-merge)
+// Changes: Removed retired .net domain references — single domain only
 
 'use strict';
 
@@ -15,7 +12,7 @@
 const VT = {
   gold: '#C8A951',
   geo_webhook: '/api/geo',
-  lang: document.documentElement.lang || (location.hostname.endsWith('.net') ? 'es' : 'en'),
+  lang: document.documentElement.lang || 'en',
   ebook_url: 'https://a.co/d/01bFuDNp',
   newsletter_en: '/#notify',
   newsletter_es: '/#notify',

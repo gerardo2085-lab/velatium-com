@@ -1,0 +1,963 @@
+{
+  "name": "WF-02 Publishing Engine",
+  "nodes": [
+    {
+      "id": "d1a2b3c4-0001-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Drive: Watch Inbox",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [0, 200],
+      "parameters": {
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "REPLACE_WITH_01_SCRIPTS_INBOX_FOLDER_ID",
+          "mode": "id"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_GOOGLE_OAUTH_CRED_ID",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0002-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Filter: .txt only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [240, 200],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-001",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": ".txt",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0003-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Extract Slug",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 200],
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst fileName = item.json.name;\nconst slug = fileName.replace(/\\.txt$/i, '').trim();\nconst txtFileId = item.json.id;\nconst parentId = item.json.parents?.[0] || '';\n\nif (!slug || !txtFileId) {\n  throw new Error('Could not extract slug or file ID from: ' + fileName);\n}\n\nreturn [{ json: { slug, txtFileId, parentId, fileName } }];"
+      }
+    },
+    {
+      "id": "d1a2b3c4-0004-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Download .txt",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [720, 200],
+      "parameters": {
+        "resource": "file",
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.txtFileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_GOOGLE_OAUTH_CRED_ID",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0005-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Read Text Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 200],
+      "parameters": {
+        "jsCode": "// Retrieve slug from the Extract Slug node (Drive Download does not pass JSON through)\nconst slugData = $('Extract Slug').first().json;\nconst slug = slugData.slug;\nconst txtFileId = slugData.txtFileId;\nconst parentId = slugData.parentId;\n\n// Extract text from binary download\nconst item = $input.first();\nconst binaryKey = Object.keys(item.binary || {})[0] || 'data';\nconst b64 = item.binary?.[binaryKey]?.data || '';\nif (!b64) throw new Error('No binary data received from Drive download');\n\nconst textContent = Buffer.from(b64, 'base64').toString('utf-8');\n\nreturn [{ json: { slug, txtFileId, parentId, textContent } }];"
+      }
+    },
+    {
+      "id": "d1a2b3c4-0006-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Call Preprocess",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8200/preprocess",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"content\": {{ JSON.stringify($json.textContent) }},\n  \"filename\": {{ JSON.stringify($json.slug + '.txt') }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0007-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Merge Preprocess Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 200],
+      "parameters": {
+        "jsCode": "// Merge preprocess results with slug data\nconst slugData = $('Read Text Content').first().json;\nconst preprocess = $input.first().json;\n\n// Validate required pillar values\nconst VALID_PILLARS = ['latin-america', 'forbidden-history', 'lost-civilizations', 'god-power'];\nconst PILLAR_LABELS = {\n  'latin-america': 'Latinoamérica Sin Censura',\n  'forbidden-history': 'Forbidden History',\n  'lost-civilizations': 'Lost Civilizations',\n  'god-power': 'God & Power'\n};\nconst PILLAR_LANGUAGE = {\n  'latin-america': 'es',\n  'forbidden-history': 'en',\n  'lost-civilizations': 'en',\n  'god-power': 'en'\n};\n\nconst pillar = preprocess.pillar || '';\nif (!VALID_PILLARS.includes(pillar)) {\n  throw new Error(`Invalid pillar '${pillar}'. Must be one of: ${VALID_PILLARS.join(', ')}`);\n}\n\n// Build the date string (today)\nconst now = new Date();\nconst dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });\n\n// KDP link: only for latin-america pillar\nconst kdpLink = (pillar === 'latin-america') ? 'https://a.co/d/01bFuDNp' : (preprocess.kdp_link || '');\n\nconst episodeData = {\n  slug: slugData.slug,\n  title: preprocess.title || '',\n  pillar: pillar,\n  pillarLabel: PILLAR_LABELS[pillar],\n  language: PILLAR_LANGUAGE[pillar],\n  date: dateStr,\n  duration: preprocess.duration || '',\n  youtube_id: preprocess.youtube_id || '',\n  spotify_id: preprocess.spotify_id || '',\n  thumbnail: `/images/episodes/${slugData.slug}.jpeg`,\n  lat: preprocess.lat || 0,\n  lng: preprocess.lng || 0,\n  article_years: preprocess.article_years || [],\n  quick_answer: preprocess.quick_answer || '',\n  article_body: preprocess.article_body || '',\n  kdp_link: kdpLink\n};\n\nreturn [{\n  json: {\n    ...episodeData,\n    txtFileId: slugData.txtFileId,\n    parentId: slugData.parentId,\n    textContent: slugData.textContent\n  }\n}];"
+      }
+    },
+    {
+      "id": "d1a2b3c4-0008-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Send Telegram Approval",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1680, 200],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "8472015496",
+        "text": "=📋 *New Episode Ready for Review*\n\n*Title:* {{ $json.title }}\n*Pillar:* {{ $json.pillarLabel }}\n*Language:* {{ $json.language.toUpperCase() }}\n*Slug:* `{{ $json.slug }}`\n*Duration:* {{ $json.duration || 'TBD' }}\n\n*Quick Answer:*\n{{ $json.quick_answer }}\n\n_Approve to publish to thevelatium.com, commit to GitHub, and send newsletter._",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": "={{ JSON.stringify({ \"inline_keyboard\": [ [ { \"text\": \"✅ Approve & Publish\", \"url\": $execution.resumeUrl + \"?action=approve\" }, { \"text\": \"❌ Reject\", \"url\": $execution.resumeUrl + \"?action=reject\" } ] ] }) }}"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_TELEGRAM_CRED_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0009-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Wait for Approval",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1920, 200],
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "webhookId": "wh-wf02-approval"
+    },
+    {
+      "id": "d1a2b3c4-0010-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Check Action",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2160, 200],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-002",
+              "leftValue": "={{ $json.query?.action || $json.action || '' }}",
+              "rightValue": "approve",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0011-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Build Episode JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 0],
+      "parameters": {
+        "jsCode": "// Reconstruct episode data from the Merge Preprocess Data node\nconst ep = $('Merge Preprocess Data').first().json;\n\n// Build clean episode JSON (matches the required schema)\nconst episodeJson = {\n  slug: ep.slug,\n  title: ep.title,\n  pillar: ep.pillar,\n  pillarLabel: ep.pillarLabel,\n  language: ep.language,\n  date: ep.date,\n  duration: ep.duration,\n  youtube_id: ep.youtube_id,\n  spotify_id: ep.spotify_id,\n  thumbnail: ep.thumbnail,\n  lat: ep.lat,\n  lng: ep.lng,\n  article_years: ep.article_years,\n  quick_answer: ep.quick_answer,\n  article_body: ep.article_body,\n  kdp_link: ep.kdp_link\n};\n\n// Remove empty optional fields to keep JSON clean\nif (!episodeJson.spotify_id) delete episodeJson.spotify_id;\nif (!episodeJson.kdp_link) delete episodeJson.kdp_link;\nif (!episodeJson.duration) delete episodeJson.duration;\n\nconst episodeJsonStr = JSON.stringify(episodeJson, null, 2);\nconst episodeJsonB64 = Buffer.from(episodeJsonStr).toString('base64');\n\n// _latest.json is a minimal summary (no article_body to keep it lightweight)\nconst latestJson = {\n  slug: ep.slug,\n  title: ep.title,\n  pillar: ep.pillar,\n  pillarLabel: ep.pillarLabel,\n  language: ep.language,\n  date: ep.date,\n  duration: ep.duration,\n  youtube_id: ep.youtube_id,\n  thumbnail: ep.thumbnail,\n  lat: ep.lat,\n  lng: ep.lng,\n  article_years: ep.article_years,\n  quick_answer: ep.quick_answer,\n  kdp_link: ep.kdp_link\n};\nif (!latestJson.kdp_link) delete latestJson.kdp_link;\nif (!latestJson.duration) delete latestJson.duration;\n\nconst latestJsonStr = JSON.stringify(latestJson, null, 2);\nconst latestJsonB64 = Buffer.from(latestJsonStr).toString('base64');\n\nreturn [{\n  json: {\n    slug: ep.slug,\n    title: ep.title,\n    pillar: ep.pillar,\n    language: ep.language,\n    txtFileId: ep.txtFileId,\n    parentId: ep.parentId,\n    textContent: ep.textContent,\n    episodeJsonB64,\n    latestJsonB64\n  }\n}];"
+      }
+    },
+    {
+      "id": "d1a2b3c4-0012-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "GET SHA: episode JSON",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2640, 0],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/gerardo2085-lab/velatium-com/contents/content/episodes/{{ $json.slug }}.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $credentials.githubApi.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-velatium"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          },
+          "redirect": {
+            "redirect": {
+              "followRedirects": true
+            }
+          }
+        }
+      },
+      "continueOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "67gx39knAzwbvJiK",
+          "name": "GitHub"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0013-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "PUT: episode JSON",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2880, 0],
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/gerardo2085-lab/velatium-com/contents/content/episodes/{{ $('Build Episode JSON').first().json.slug }}.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $credentials.githubApi.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-velatium"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"message\": \"publish: add {{ $('Build Episode JSON').first().json.slug }}.json\",\n  \"content\": \"{{ $('Build Episode JSON').first().json.episodeJsonB64 }}\"\n  {{ $json.sha ? ', \"sha\": \"' + $json.sha + '\"' : '' }}\n}",
+        "options": {}
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "67gx39knAzwbvJiK",
+          "name": "GitHub"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0014-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "GET SHA: _latest.json",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3120, 0],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/gerardo2085-lab/velatium-com/contents/content/episodes/_latest.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $credentials.githubApi.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-velatium"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "67gx39knAzwbvJiK",
+          "name": "GitHub"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0015-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "PUT: _latest.json",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3360, 0],
+      "parameters": {
+        "method": "PUT",
+        "url": "https://api.github.com/repos/gerardo2085-lab/velatium-com/contents/content/episodes/_latest.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $credentials.githubApi.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-velatium"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"message\": \"publish: update _latest.json → {{ $('Build Episode JSON').first().json.slug }}\",\n  \"content\": \"{{ $('Build Episode JSON').first().json.latestJsonB64 }}\",\n  \"sha\": \"{{ $json.sha }}\"\n}",
+        "options": {}
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "67gx39knAzwbvJiK",
+          "name": "GitHub"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0016-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Search .jpeg in Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [3600, 0],
+      "parameters": {
+        "resource": "file",
+        "operation": "search",
+        "queryString": "=name = '{{ $('Build Episode JSON').first().json.slug }}.jpeg' and '{{ $('Build Episode JSON').first().json.parentId }}' in parents and trashed = false",
+        "limit": 1,
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_GOOGLE_OAUTH_CRED_ID",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0017-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Download .jpeg",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [3840, 0],
+      "parameters": {
+        "resource": "file",
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_GOOGLE_OAUTH_CRED_ID",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0018-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Extract Thumbnail B64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4080, 0],
+      "parameters": {
+        "jsCode": "// Extract base64 image data from the binary download\nconst item = $input.first();\nconst binaryKey = Object.keys(item.binary || {})[0] || 'data';\nconst imageB64 = item.binary?.[binaryKey]?.data || '';\nif (!imageB64) throw new Error('No binary data received for thumbnail');\n\nconst slug = $('Build Episode JSON').first().json.slug;\n\nreturn [{ json: { slug, imageB64 } }];"
+      }
+    },
+    {
+      "id": "d1a2b3c4-0019-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "GET SHA: thumbnail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4320, 0],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/gerardo2085-lab/velatium-com/contents/public/images/episodes/{{ $json.slug }}.jpeg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $credentials.githubApi.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-velatium"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "continueOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "67gx39knAzwbvJiK",
+          "name": "GitHub"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0020-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "PUT: thumbnail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4560, 0],
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/gerardo2085-lab/velatium-com/contents/public/images/episodes/{{ $('Extract Thumbnail B64').first().json.slug }}.jpeg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $credentials.githubApi.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-velatium"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"message\": \"publish: add thumbnail {{ $('Extract Thumbnail B64').first().json.slug }}.jpeg\",\n  \"content\": \"{{ $('Extract Thumbnail B64').first().json.imageB64 }}\"\n  {{ $json.sha ? ', \"sha\": \"' + $json.sha + '\"' : '' }}\n}",
+        "options": {}
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "67gx39knAzwbvJiK",
+          "name": "GitHub"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0021-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Create Listmonk Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4800, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.119.2.16:9000/api/campaigns",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"name\": \"{{ $('Merge Preprocess Data').first().json.slug }}\",\n  \"subject\": \"{{ $('Merge Preprocess Data').first().json.title }}\",\n  \"lists\": [\"23d2e48c-a961-4395-95fd-ce16226b9396\"],\n  \"type\": \"regular\",\n  \"content_type\": \"richtext\",\n  \"body\": {{ JSON.stringify($('Merge Preprocess Data').first().json.textContent) }},\n  \"send_at\": null\n}",
+        "options": {}
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "REPLACE_WITH_LISTMONK_BASIC_AUTH_CRED_ID",
+          "name": "Listmonk"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0022-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Send Listmonk Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5040, 0],
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://100.119.2.16:9000/api/campaigns/{{ $json.data.id }}/status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "{\"status\": \"running\"}",
+        "options": {}
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "REPLACE_WITH_LISTMONK_BASIC_AUTH_CRED_ID",
+          "name": "Listmonk"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0023-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Move .txt to Published",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [5280, 0],
+      "parameters": {
+        "resource": "file",
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Build Episode JSON').first().json.txtFileId }}",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_03_PUBLISHED_FOLDER_ID",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_GOOGLE_OAUTH_CRED_ID",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0024-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Move .jpeg to Published",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [5520, 0],
+      "parameters": {
+        "resource": "file",
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Search .jpeg in Drive').first().json.id }}",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_03_PUBLISHED_FOLDER_ID",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_GOOGLE_OAUTH_CRED_ID",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0025-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Telegram: Published",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [5760, 0],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "8472015496",
+        "text": "=✅ *{{ $('Build Episode JSON').first().json.slug }}* published\n\nthevelatium.com/episodes/{{ $('Build Episode JSON').first().json.slug }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_TELEGRAM_CRED_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "id": "d1a2b3c4-0026-4e5f-a6b7-c8d9e0f1a2b3",
+      "name": "Telegram: Rejected",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2400, 400],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "8472015496",
+        "text": "=❌ *{{ $('Merge Preprocess Data').first().json.slug }}* rejected — files remain in 01_Scripts_Inbox",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_TELEGRAM_CRED_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Drive: Watch Inbox": {
+      "main": [
+        [
+          {
+            "node": "Filter: .txt only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: .txt only": {
+      "main": [
+        [
+          {
+            "node": "Extract Slug",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Extract Slug": {
+      "main": [
+        [
+          {
+            "node": "Download .txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download .txt": {
+      "main": [
+        [
+          {
+            "node": "Read Text Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Text Content": {
+      "main": [
+        [
+          {
+            "node": "Call Preprocess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Preprocess": {
+      "main": [
+        [
+          {
+            "node": "Merge Preprocess Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Preprocess Data": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram Approval": {
+      "main": [
+        [
+          {
+            "node": "Wait for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Approval": {
+      "main": [
+        [
+          {
+            "node": "Check Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Action": {
+      "main": [
+        [
+          {
+            "node": "Build Episode JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Episode JSON": {
+      "main": [
+        [
+          {
+            "node": "GET SHA: episode JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET SHA: episode JSON": {
+      "main": [
+        [
+          {
+            "node": "PUT: episode JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PUT: episode JSON": {
+      "main": [
+        [
+          {
+            "node": "GET SHA: _latest.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET SHA: _latest.json": {
+      "main": [
+        [
+          {
+            "node": "PUT: _latest.json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PUT: _latest.json": {
+      "main": [
+        [
+          {
+            "node": "Search .jpeg in Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search .jpeg in Drive": {
+      "main": [
+        [
+          {
+            "node": "Download .jpeg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download .jpeg": {
+      "main": [
+        [
+          {
+            "node": "Extract Thumbnail B64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Thumbnail B64": {
+      "main": [
+        [
+          {
+            "node": "GET SHA: thumbnail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET SHA: thumbnail": {
+      "main": [
+        [
+          {
+            "node": "PUT: thumbnail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PUT: thumbnail": {
+      "main": [
+        [
+          {
+            "node": "Create Listmonk Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Listmonk Campaign": {
+      "main": [
+        [
+          {
+            "node": "Send Listmonk Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Listmonk Campaign": {
+      "main": [
+        [
+          {
+            "node": "Move .txt to Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move .txt to Published": {
+      "main": [
+        [
+          {
+            "node": "Move .jpeg to Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move .jpeg to Published": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "executionTimeout": 3600
+  },
+  "versionId": "d1a2b3c4-ffff-4e5f-a6b7-c8d9e0f1a2b3",
+  "id": "wf-02-publishing-engine",
+  "tags": [
+    {
+      "name": "publishing"
+    }
+  ]
+}

@@ -6,11 +6,13 @@
   "language": "es",
   "date": "March 10, 2026",
   "duration": "42 min",
-  "youtube_id": "YOUTUBE_VIDEO_ID",
+  "youtube_id": "",
+  "spotify_id": "",
   "thumbnail": "/images/episodes/cuba-antes-de-castro.jpeg",
   "lat": 22.0,
   "lng": -79.5,
   "article_years": [1492, 1776, 1898, 1933, 1958, 1959],
-  "quick_answer": "Before 1959, Cuba ranked among Latin America's most prosperous nations.",
+  "quick_answer": "Before 1959, Cuba ranked among Latin America's most prosperous nations — a high-literacy, rapidly urbanizing economy strangled not by poverty but by a revolution that promised equality and delivered control.",
+  "article_body": "",
   "kdp_link": "https://a.co/d/01bFuDNp"
 }
