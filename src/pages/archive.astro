@@ -8,7 +8,7 @@ const episodeFiles = await Astro.glob('../../content/episodes/*.json');
 const episodes: Episode[] = episodeFiles
   .filter(f => !f.url?.includes('_latest'))
   .map(f => f.default as Episode)
-  .filter(ep => ep.slug)
+  .filter(ep => ep.slug && !ep.slug.startsWith('_'))
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 const year = new Date().getFullYear();
