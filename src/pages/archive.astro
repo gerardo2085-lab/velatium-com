@@ -6,9 +6,9 @@ import type { Episode } from '../lib/episodes';
 // Load all episodes from content/episodes/*.json (excluding _latest)
 const episodeFiles = await Astro.glob('../../content/episodes/*.json');
 const episodes: Episode[] = episodeFiles
-  .filter(f => !f.url?.includes('_latest'))
   .map(f => f.default as Episode)
   .filter(ep => ep.slug && !ep.slug.startsWith('_'))
+  .filter((ep, i, arr) => arr.findIndex(e => e.slug === ep.slug) === i)
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 const year = new Date().getFullYear();
