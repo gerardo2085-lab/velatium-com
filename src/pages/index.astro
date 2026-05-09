@@ -17,7 +17,9 @@ let latest: Partial<Episode> = {
 
 try {
   const raw = await import('../../content/episodes/_latest.json');
-  latest = raw.default;
+  if (raw.default.slug && !raw.default.slug.startsWith('_')) {
+    latest = raw.default;
+  }
 } catch (_) {}
 
 const episodeUrl = `/episodes/${latest.slug}`;
