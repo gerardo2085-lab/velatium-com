@@ -9,7 +9,7 @@ export async function getStaticPaths() {
   // Load all episode JSON files from /content/episodes/
   const episodeFiles = await Astro.glob('../../../content/episodes/*.json');
   return episodeFiles
-    .filter(f => !f.default.slug?.startsWith('_'))
+    .filter(f => f.default.slug && !f.default.slug.startsWith('_'))
     .map(f => ({
       params: { slug: f.default.slug },
       props: { episode: f.default as Episode }
