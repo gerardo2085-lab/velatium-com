@@ -19,6 +19,7 @@ interface Book {
   spanish_edition: boolean;
   amazon_url: string | null;
   cover: string | null;
+  es_edition: { title: string | null; amazon_url: string | null; price_ebook: string | null; price_paperback: string | null } | null;
 }
 
 const books = booksData as Book[];
@@ -72,11 +73,13 @@ const fiction = books.filter((b) => b.section === 'fiction');
                 <div class="book-meta">
                   {book.price_ebook && <span class="meta-item"><strong>Ebook</strong> {book.price_ebook}</span>}
                   {book.price_paperback && <span class="meta-item"><strong>Paperback</strong> {book.price_paperback}</span>}
-                  {book.spanish_edition && <span class="meta-item">Spanish</span>}
                   <span class="meta-item">Available Now</span>
                 </div>
                 {book.amazon_url && (
                   <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Get the Book →</a>
+                )}
+                {book.es_edition?.amazon_url && (
+                  <a class="book-btn-es" href={book.es_edition.amazon_url} target="_blank" rel="noopener">También disponible en español →</a>
                 )}
               </Fragment>
             )}
@@ -120,11 +123,13 @@ const fiction = books.filter((b) => b.section === 'fiction');
                 <div class="book-meta">
                   {book.price_ebook && <span class="meta-item"><strong>Ebook</strong> {book.price_ebook}</span>}
                   {book.price_paperback && <span class="meta-item"><strong>Paperback</strong> {book.price_paperback}</span>}
-                  {book.spanish_edition && <span class="meta-item">Spanish</span>}
                   <span class="meta-item">Available Now</span>
                 </div>
                 {book.amazon_url && (
                   <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Get the Book →</a>
+                )}
+                {book.es_edition?.amazon_url && (
+                  <a class="book-btn-es" href={book.es_edition.amazon_url} target="_blank" rel="noopener">También disponible en español →</a>
                 )}
               </Fragment>
             )}
@@ -353,6 +358,14 @@ const fiction = books.filter((b) => b.section === 'fiction');
     transition: background 220ms ease, transform 220ms ease;
   }
   .book-btn:hover { background: #a93226; transform: translateY(-2px); }
+
+  .book-btn-es {
+    display: inline-block; font-family: var(--lato); font-size: 13px;
+    color: var(--muted); text-decoration: underline; text-underline-offset: 3px;
+    margin-top: 12px; align-self: flex-start;
+    transition: color 220ms ease;
+  }
+  .book-btn-es:hover { color: var(--text); }
 
   .soon-label {
     font-family: var(--cinzel); font-size: 12px; font-weight: 600;
