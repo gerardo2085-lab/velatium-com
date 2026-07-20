@@ -1,0 +1,12 @@
+{
+  "slug": "test-article-verification-delete-me",
+  "title": "Test Article — Verification Only",
+  "pillar": "latin-america",
+  "language": "en",
+  "date": "July 20, 2026",
+  "quick_answer": "This is a disposable test article created to verify the article publish path end-to-end. It will be deleted immediately after verification.",
+  "article_body": "<p>Test content for pipeline verification.</p>",
+  "sources": [
+    "Test source"
+  ]
+}
