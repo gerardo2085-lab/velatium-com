@@ -552,8 +552,8 @@ const emoji = PILLAR_EMOJI[episode.pillar] ?? '🔍';
     if (!email) return;
 
     const endpoint = document.documentElement.lang === 'es'
-      ? '/webhook/subscribe-es'
-      : '/webhook/subscribe-en';
+      ? 'https://webhooks.thevelatium.com/webhook/subscribe-es'
+      : 'https://webhooks.thevelatium.com/webhook/subscribe-en';
 
     try {
       await fetch(endpoint, {
