@@ -60,7 +60,7 @@ const fiction = books.filter((b) => b.section === 'fiction');
             )}
           </div>
           <div class="book-info">
-            <div class="book-series">{book.series ?? `The Velatium · ${book.author}`}</div>
+            <div class="book-series">{book.series ?? (book.section === 'nonfiction' ? 'Nonfiction' : 'Fiction')}</div>
             <h2 class="book-title">{book.title}</h2>
             <div class="book-author">{book.author}</div>
             <div class="book-rule"></div>
@@ -76,7 +76,7 @@ const fiction = books.filter((b) => b.section === 'fiction');
                   <span class="meta-item">Available Now</span>
                 </div>
                 {book.amazon_url && (
-                  <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Read on Amazon →</a>
+                  <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Get the Book →</a>
                 )}
               </Fragment>
             )}
@@ -108,7 +108,7 @@ const fiction = books.filter((b) => b.section === 'fiction');
             )}
           </div>
           <div class="book-info">
-            <div class="book-series">{book.series ?? `The Velatium · ${book.author}`}</div>
+            <div class="book-series">{book.series ?? (book.section === 'nonfiction' ? 'Nonfiction' : 'Fiction')}</div>
             <h2 class="book-title">{book.title}</h2>
             <div class="book-author">{book.author}</div>
             <div class="book-rule"></div>
@@ -124,7 +124,7 @@ const fiction = books.filter((b) => b.section === 'fiction');
                   <span class="meta-item">Available Now</span>
                 </div>
                 {book.amazon_url && (
-                  <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Read on Amazon →</a>
+                  <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Get the Book →</a>
                 )}
               </Fragment>
             )}
