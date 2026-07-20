@@ -3,6 +3,8 @@ import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import type { Episode } from '../lib/episodes';
+import { PILLAR_LABELS } from '../lib/episodes';
+import type { Article } from '../lib/articles';
 
 // Load latest episode for episode bar + map
 let latest: Partial<Episode> = {
@@ -22,10 +24,41 @@ try {
   }
 } catch (_) {}
 
-const episodeUrl = `/episodes/${latest.slug}`;
+// The map/hero coords always stay pinned to the latest EPISODE — articles
+// have no geo field in v1, so there's nothing to point the map at.
 const epLat = latest.lat ?? 22.0;
 const epLng = latest.lng ?? -79.5;
 const epTitle = latest.title ?? '';
+
+// Info bar staleness guard: if the newest article is more recent than the
+// latest episode (episodes can go months between publishes), show the
+// article there instead — the map/coords are untouched either way.
+let infoBar = {
+  badge: 'New Episode',
+  title: latest.title ?? '',
+  meta: `${latest.duration ?? ''} · ${latest.pillarLabel ?? ''}`,
+  thumbnail: latest.thumbnail,
+  href: `/episodes/${latest.slug}`,
+};
+
+try {
+  const articleFiles = await Astro.glob('../../content/articles/*.json');
+  const articles = articleFiles.map((f) => f.default as Article).filter((a) => a.slug);
+  if (articles.length > 0) {
+    const newestArticle = articles.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const episodeDate = new Date(latest.date ?? 0).getTime();
+    const articleDate = new Date(newestArticle.date).getTime();
+    if (!isNaN(articleDate) && articleDate > episodeDate) {
+      infoBar = {
+        badge: 'New Article',
+        title: newestArticle.title,
+        meta: `${PILLAR_LABELS[newestArticle.pillar] ?? newestArticle.pillar} · ${newestArticle.date}`,
+        thumbnail: newestArticle.hero_image,
+        href: `/articles/${newestArticle.slug}`,
+      };
+    }
+  }
+} catch (_) {}
 ---
 
 <Base
@@ -70,13 +103,13 @@ const epTitle = latest.title ?? '';
 
   </section>
 
-  <!-- EPISODE BAR -->
-  <a href={episodeUrl} class="episode-bar">
-    <div class="ep-thumb" style={latest.thumbnail ? `background-image:url('${latest.thumbnail}');background-size:cover;background-position:center;` : ''}></div>
+  <!-- EPISODE / ARTICLE BAR -->
+  <a href={infoBar.href} class="episode-bar">
+    <div class="ep-thumb" style={infoBar.thumbnail ? `background-image:url('${infoBar.thumbnail}');background-size:cover;background-position:center;` : ''}></div>
     <div class="ep-body">
-      <div class="ep-badge">New Episode</div>
-      <div class="ep-title">{latest.title}</div>
-      <div class="ep-meta">{latest.duration} · {latest.pillarLabel}</div>
+      <div class="ep-badge">{infoBar.badge}</div>
+      <div class="ep-title">{infoBar.title}</div>
+      <div class="ep-meta">{infoBar.meta}</div>
     </div>
     <div class="ep-play">
       <svg width="13" height="13" viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21" fill="#C8A951"/></svg>
