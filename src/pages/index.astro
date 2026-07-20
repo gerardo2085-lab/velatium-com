@@ -24,15 +24,24 @@ try {
   }
 } catch (_) {}
 
-// The map/hero coords always stay pinned to the latest EPISODE — articles
-// have no geo field in v1, so there's nothing to point the map at.
+// Episode coords — the default map target, and the fallback whenever an
+// article is shown but has no lat/lng of its own (Session 17: articles can
+// now carry optional geo fields; see mapLat/mapLng below).
 const epLat = latest.lat ?? 22.0;
 const epLng = latest.lng ?? -79.5;
 const epTitle = latest.title ?? '';
 
+// The map/hero target defaults to the episode; the staleness guard below
+// overrides these to the article's own coords when it's the one being
+// shown AND it has valid numeric lat/lng — otherwise they're left as the
+// episode's, so an article with no geo data never breaks the map.
+let mapLat = epLat;
+let mapLng = epLng;
+let mapTitle = epTitle;
+
 // Info bar staleness guard: if the newest article is more recent than the
 // latest episode (episodes can go months between publishes), show the
-// article there instead — the map/coords are untouched either way.
+// article there instead.
 let infoBar = {
   badge: 'New Episode',
   title: latest.title ?? '',
@@ -56,6 +65,11 @@ try {
         thumbnail: newestArticle.hero_image,
         href: `/articles/${newestArticle.slug}`,
       };
+      if (typeof newestArticle.lat === 'number' && typeof newestArticle.lng === 'number') {
+        mapLat = newestArticle.lat;
+        mapLng = newestArticle.lng;
+        mapTitle = newestArticle.title;
+      }
     }
   }
 } catch (_) {}
@@ -94,7 +108,7 @@ try {
         <div class="pulse-ring"></div>
         <div class="dot-core"></div>
         <div class="ep-label">
-          <span class="ep-label-title" id="epLabel">{epTitle}</span>
+          <span class="ep-label-title" id="epLabel">{mapTitle}</span>
         </div>
       </div>
       <canvas id="glowCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:5;"></canvas>
@@ -141,7 +155,7 @@ try {
 </Base>
 
 <!-- Pass episode coords to client JS -->
-<script define:vars={{ epLat, epLng, epTitle }}>
+<script define:vars={{ epLat: mapLat, epLng: mapLng, epTitle: mapTitle }}>
   /* ── HERO WORD ANIMATION ── */
   document.body.classList.add('js-ready');
 

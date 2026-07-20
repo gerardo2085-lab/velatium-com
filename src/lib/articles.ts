@@ -16,4 +16,6 @@ export interface Article {
   kdp_link?: string;
   hero_image?: string;
   sources?: string[];
+  lat?: number;
+  lng?: number;
 }
