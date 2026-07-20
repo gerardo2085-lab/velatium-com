@@ -1,8 +1,29 @@
 ---
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
+import booksData from '../../content/books.json';
 
 const year = new Date().getFullYear();
+
+interface Book {
+  slug: string;
+  title: string;
+  author: string;
+  section: 'nonfiction' | 'fiction';
+  series: string | null;
+  language: string;
+  status: 'published' | 'upcoming';
+  blurb: string | null;
+  price_ebook: string | null;
+  price_paperback: string | null;
+  spanish_edition: boolean;
+  amazon_url: string | null;
+  cover: string | null;
+}
+
+const books = booksData as Book[];
+const nonfiction = books.filter((b) => b.section === 'nonfiction');
+const fiction = books.filter((b) => b.section === 'fiction');
 ---
 
 <Base
@@ -17,79 +38,109 @@ const year = new Date().getFullYear();
     <p class="page-sub">Archive-sourced nonfiction. Historical fiction built from the same records. Two catalogs. One standard.</p>
   </header>
 
-  <!-- NONFICTION -->
-  <div class="section-head">
-    <div class="section-line gold"></div>
-    <span class="section-label gold">Nonfiction</span>
-    <div class="section-line gold"></div>
-  </div>
-
-  <div class="book-card reveal">
-    <div class="book-cover-wrap">
-      <img src="/images/books/cuba-book.jpeg" alt="The Island That Swallowed Its Children" />
-    </div>
-    <div class="book-info">
-      <div class="book-series">The Velatium · History Uncovered</div>
-      <h2 class="book-title">The Island That Swallowed Its Children</h2>
-      <div class="book-author">The Velatium</div>
-      <div class="book-rule"></div>
-      <p class="book-desc">Castro, Cuba, and the price of a revolution that never ended. Before 1959, Cuba ranked second in Latin America by per capita income — more doctors per capita than France. What Castro inherited was not a failed state. What he built was one. Sourced from declassified documents, survivor testimony, and Cuban government data set against lived reality.</p>
-      <div class="book-meta">
-        <span class="meta-item"><strong>Ebook</strong> $4.99</span>
-        <span class="meta-item"><strong>Paperback</strong> $16.99</span>
-        <span class="meta-item">Spanish</span>
-        <span class="meta-item">Available Now</span>
+  {nonfiction.length > 0 && (
+    <Fragment>
+      <div class="section-head">
+        <div class="section-line gold"></div>
+        <span class="section-label gold">Nonfiction</span>
+        <div class="section-line gold"></div>
       </div>
-      <a class="book-btn" href="https://a.co/d/0dWKqw5Q" target="_blank" rel="noopener">Read on Amazon →</a>
-    </div>
-  </div>
+      {nonfiction.map((book) => (
+        <div class="book-card reveal" id={book.slug}>
+          <div class="book-cover-wrap">
+            {book.status === 'upcoming' ? (
+              <div class="cover-coming">
+                {book.cover ? <img src={book.cover} alt={book.title} /> : <div class="cover-placeholder">{book.title}</div>}
+                <div class="cover-badge">In Production</div>
+              </div>
+            ) : book.cover ? (
+              <img src={book.cover} alt={book.title} />
+            ) : (
+              <div class="cover-placeholder">{book.title}</div>
+            )}
+          </div>
+          <div class="book-info">
+            <div class="book-series">{book.series ?? `The Velatium · ${book.author}`}</div>
+            <h2 class="book-title">{book.title}</h2>
+            <div class="book-author">{book.author}</div>
+            <div class="book-rule"></div>
+            {book.blurb && <p class="book-desc">{book.blurb}</p>}
+            {book.status === 'upcoming' ? (
+              <div class="soon-label">In Production</div>
+            ) : (
+              <Fragment>
+                <div class="book-meta">
+                  {book.price_ebook && <span class="meta-item"><strong>Ebook</strong> {book.price_ebook}</span>}
+                  {book.price_paperback && <span class="meta-item"><strong>Paperback</strong> {book.price_paperback}</span>}
+                  {book.spanish_edition && <span class="meta-item">Spanish</span>}
+                  <span class="meta-item">Available Now</span>
+                </div>
+                {book.amazon_url && (
+                  <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Read on Amazon →</a>
+                )}
+              </Fragment>
+            )}
+          </div>
+        </div>
+      ))}
+    </Fragment>
+  )}
 
-  <!-- FICTION -->
-  <div class="section-head">
-    <div class="section-line purple"></div>
-    <span class="section-label purple">Fiction</span>
-    <div class="section-line purple"></div>
-  </div>
+  {fiction.length > 0 && (
+    <Fragment>
+      <div class="section-head">
+        <div class="section-line purple"></div>
+        <span class="section-label purple">Fiction</span>
+        <div class="section-line purple"></div>
+      </div>
+      {fiction.map((book) => (
+        <div class="book-card fiction-card reveal" id={book.slug}>
+          <div class="book-cover-wrap">
+            {book.status === 'upcoming' ? (
+              <div class="cover-coming">
+                {book.cover ? <img src={book.cover} alt={book.title} /> : <div class="cover-placeholder">{book.title}</div>}
+                <div class="cover-badge">In Production</div>
+              </div>
+            ) : book.cover ? (
+              <img src={book.cover} alt={book.title} />
+            ) : (
+              <div class="cover-placeholder">{book.title}</div>
+            )}
+          </div>
+          <div class="book-info">
+            <div class="book-series">{book.series ?? `The Velatium · ${book.author}`}</div>
+            <h2 class="book-title">{book.title}</h2>
+            <div class="book-author">{book.author}</div>
+            <div class="book-rule"></div>
+            {book.blurb && <p class="book-desc">{book.blurb}</p>}
+            {book.status === 'upcoming' ? (
+              <div class="soon-label">In Production</div>
+            ) : (
+              <Fragment>
+                <div class="book-meta">
+                  {book.price_ebook && <span class="meta-item"><strong>Ebook</strong> {book.price_ebook}</span>}
+                  {book.price_paperback && <span class="meta-item"><strong>Paperback</strong> {book.price_paperback}</span>}
+                  {book.spanish_edition && <span class="meta-item">Spanish</span>}
+                  <span class="meta-item">Available Now</span>
+                </div>
+                {book.amazon_url && (
+                  <a class="book-btn" href={book.amazon_url} target="_blank" rel="noopener">Read on Amazon →</a>
+                )}
+              </Fragment>
+            )}
+          </div>
+        </div>
+      ))}
+    </Fragment>
+  )}
 
-  <div class="book-card fiction-card reveal">
-    <div class="book-cover-wrap">
-      <img src="/images/books/havana-protocol.jpeg" alt="The Havana Protocol" />
-    </div>
-    <div class="book-info">
-      <div class="book-series">Cold War Hearts · Book 1 · Alma Voss</div>
-      <h2 class="book-title">The Havana Protocol</h2>
-      <div class="book-author">Alma Voss</div>
-      <div class="book-rule"></div>
-      <p class="book-desc">Havana, 1961. A Soviet double agent. A CIA handler. A city on the edge of history. Marta Sokolova has one mission and one rule: never feel anything. When she meets Daniel Reyes on the Malecón, neither is who they claim to be. The word "love" is never spoken. But everything depends on it.</p>
-      <div class="book-meta">
-        <span class="meta-item"><strong>Ebook</strong> $4.99</span>
-        <span class="meta-item"><strong>Paperback</strong> $14.99</span>
-        <span class="meta-item">65,500 words</span>
-        <span class="meta-item">Available Now</span>
-      </div>
-      <a class="book-btn" href="https://a.co/d/03fvyiZd" target="_blank" rel="noopener">Read on Amazon →</a>
-    </div>
-  </div>
-
-  <div class="book-card fiction-card reveal">
-    <div class="book-cover-wrap">
-      <div class="cover-coming">
-        <img src="/images/books/vienna-cipher.png" alt="The Vienna Cipher" />
-        <div class="cover-badge">Coming 2026</div>
-      </div>
-    </div>
-    <div class="book-info">
-      <div class="book-series">Cold War Hearts · Book 2 · Alma Voss</div>
-      <h2 class="book-title">The Vienna Cipher</h2>
-      <div class="book-author">Alma Voss</div>
-      <div class="book-rule"></div>
-      <p class="book-desc">Vienna, August 12–14, 1961. The Berlin Wall goes up. Marta Sokolova and James Calloway — a burned-out MI6 handler with nothing left to lose — have 72 hours. Colder than The Havana Protocol. More cerebral. Set before it. Three days that change everything.</p>
-      <div class="book-meta">
-        <span class="meta-item">In Production</span>
-        <span class="meta-item">2026</span>
-      </div>
-      <div class="soon-label">Coming Soon</div>
-    </div>
+  <!-- Email capture (Site Update v1.0 workstream 2) -->
+  <div class="nl-card">
+    <div class="nl-title">New investigations before anyone else.</div>
+    <form class="nl-form" id="booksNlForm">
+      <input type="email" class="nl-input" id="booksNlEmail" placeholder="your@email.com" required autocomplete="email" />
+      <button type="submit" class="nl-btn">Subscribe</button>
+    </form>
   </div>
 
   <footer>
@@ -117,6 +168,35 @@ const year = new Date().getFullYear();
     });
   }, { threshold: 0.08 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  const form = document.getElementById('booksNlForm');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('booksNlEmail') as HTMLInputElement;
+    const btn = form.querySelector('.nl-btn') as HTMLButtonElement;
+    const email = input.value.trim();
+    if (!email) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const res = await fetch('https://webhooks.thevelatium.com/webhook/subscribe-en', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        input.value = '';
+        input.placeholder = '✓ Subscribed';
+        btn.textContent = 'Subscribed';
+      } else {
+        throw new Error('Bad response');
+      }
+    } catch {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+      input.placeholder = 'Try again';
+    }
+  });
 </script>
 
 <style>
@@ -168,6 +248,7 @@ const year = new Date().getFullYear();
     margin-bottom: 2px;
     position: relative;
     overflow: hidden;
+    scroll-margin-top: 100px;
   }
   .book-card.fiction-card { border-color: rgba(176,136,204,0.08); }
 
@@ -198,8 +279,20 @@ const year = new Date().getFullYear();
     box-shadow: 0 40px 90px rgba(0,0,0,0.85), 0 8px 32px rgba(176,136,204,0.18);
   }
 
+  .cover-placeholder {
+    width: 220px; height: 330px; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 24px; box-sizing: border-box;
+    background: linear-gradient(160deg, var(--purple), var(--bg));
+    border: 1px solid rgba(200,169,81,0.25);
+    font-family: var(--cinzel); font-size: 15px; color: var(--gold);
+    letter-spacing: 0.04em; line-height: 1.4;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.75), 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .fiction-card .cover-placeholder { color: #b088cc; border-color: rgba(176,136,204,0.3); }
+
   .cover-coming { position: relative; display: inline-block; }
   .cover-coming img { opacity: 0.4; filter: grayscale(20%); }
+  .cover-coming .cover-placeholder { opacity: 0.5; }
   .cover-badge {
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -272,6 +365,35 @@ const year = new Date().getFullYear();
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity 700ms ease, transform 700ms ease; }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
+  /* EMAIL CAPTURE */
+  .nl-card {
+    margin: 64px 80px; padding: 48px;
+    background: var(--purple); border: 1px solid rgba(200,169,81,0.2);
+    text-align: center;
+  }
+  .nl-title {
+    font-family: var(--cinzel); font-size: clamp(18px, 2.2vw, 26px);
+    color: var(--text); margin-bottom: 24px; letter-spacing: 0.02em;
+  }
+  .nl-form {
+    display: flex; gap: 12px; max-width: 440px; margin: 0 auto; flex-wrap: wrap; justify-content: center;
+  }
+  .nl-input {
+    flex: 1; min-width: 220px; background: transparent; border: none;
+    border-bottom: 1px solid rgba(200,169,81,0.3); color: var(--text);
+    font-family: var(--lato); font-size: 15px; padding: 10px 4px; outline: none;
+    transition: border-color 220ms ease;
+  }
+  .nl-input:focus { border-color: var(--gold); }
+  .nl-btn {
+    background: var(--gold); color: var(--bg); border: none;
+    font-family: var(--cinzel); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 12px 28px; cursor: pointer; transition: opacity 220ms ease;
+  }
+  .nl-btn:hover { opacity: 0.85; }
+  .nl-btn:disabled { opacity: 0.6; cursor: default; }
+
   footer {
     border-top: 1px solid rgba(200,169,81,0.12);
     padding: 40px; display: flex;
@@ -294,10 +416,12 @@ const year = new Date().getFullYear();
     .book-card { grid-template-columns: 1fr; }
     .book-cover-wrap { padding: 48px 40px 24px; justify-content: center; }
     .book-cover-wrap img { width: 180px; }
+    .cover-placeholder { width: 180px; height: 270px; }
     .book-info { padding: 24px 40px 52px; }
     .book-info::before { display: none; }
     .section-head { padding: 52px 40px 40px; }
     .page-header { padding: 90px 40px 52px; }
+    .nl-card { margin: 48px 40px; padding: 36px 24px; }
   }
   @media (max-width: 768px) {
     nav { padding: 0 24px; }
@@ -306,5 +430,6 @@ const year = new Date().getFullYear();
     .section-head { padding: 44px 24px 36px; }
     .page-header { padding: 88px 24px 44px; }
     footer { flex-direction: column; text-align: center; padding: 32px 24px; }
+    .nl-card { margin: 40px 20px; }
   }
 </style>
