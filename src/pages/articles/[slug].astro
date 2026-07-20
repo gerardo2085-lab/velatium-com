@@ -1,0 +1,171 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { PILLAR_LABELS, PILLAR_EMOJI } from '../../lib/episodes';
+import type { Article } from '../../lib/articles';
+
+export async function getStaticPaths() {
+  const articleFiles = await Astro.glob('../../../content/articles/*.json');
+  return articleFiles
+    .filter((f) => f.default.slug)
+    .map((f) => ({
+      params: { slug: f.default.slug },
+      props: { article: f.default as Article },
+    }));
+}
+
+const { article } = Astro.props as { article: Article };
+const emoji = PILLAR_EMOJI[article.pillar] ?? '🔍';
+const pillarLabel = PILLAR_LABELS[article.pillar] ?? article.pillar;
+---
+
+<Base
+  title={article.title}
+  description={article.quick_answer}
+  ogImage={article.hero_image}
+  lang={article.language}
+>
+  <Nav />
+
+  <main class="article-page">
+    <div class="article-hero" style={article.hero_image ? `background-image: url('${article.hero_image}')` : undefined}>
+      <div class="article-hero-overlay"></div>
+      <div class="article-hero-content">
+        <div class="article-pillar-badge">
+          <span class="article-pillar-emoji">{emoji}</span>
+          {pillarLabel}
+        </div>
+        <h1 class="article-title">{article.title}</h1>
+        <div class="article-meta">
+          <span>{article.date}</span>
+          <span class="meta-sep">·</span>
+          <span class="meta-lang">{article.language.toUpperCase()}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="article-layout">
+      <article class="article-body">
+        <div class="quick-answer">
+          <div class="qa-label">Quick Answer</div>
+          <p>{article.quick_answer}</p>
+        </div>
+
+        <div class="article-content" set:html={article.article_body}></div>
+
+        {article.kdp_link && (
+          <div class="kdp-cta">
+            <div class="kdp-cta-label">Go deeper</div>
+            <h3>The full story is in the book.</h3>
+            <p>Everything that didn't fit here — documented, sourced, told without cuts.</p>
+            <a href={article.kdp_link} target="_blank" rel="noopener" class="kdp-btn">Get the Book →</a>
+          </div>
+        )}
+
+        {article.sources && article.sources.length > 0 && (
+          <div class="sources">
+            <div class="sources-label">Sources</div>
+            <ul>
+              {article.sources.map((s) => <li>{s}</li>)}
+            </ul>
+          </div>
+        )}
+
+        <div class="catalog-cta">
+          <a href="/books">Read the full investigations in the books →</a>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <Footer />
+</Base>
+
+<style>
+  .article-page { padding-top: 60px; }
+
+  .article-hero {
+    position: relative;
+    min-height: 260px;
+    display: flex;
+    align-items: flex-end;
+    background-color: var(--purple);
+    background-size: cover;
+    background-position: center;
+    padding: 60px 0 0;
+  }
+  .article-hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(10,10,10,0.5) 0%, var(--bg) 92%);
+  }
+  .article-hero-content {
+    position: relative; z-index: 1;
+    max-width: 800px; margin: 0 auto; width: 100%;
+    padding: 40px 32px 48px;
+  }
+  .article-pillar-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid rgba(200,169,81,0.3);
+    padding: 5px 12px; margin-bottom: 20px;
+  }
+  .article-title {
+    font-family: var(--cinzel); font-size: clamp(24px, 4vw, 42px);
+    font-weight: 700; color: var(--text); line-height: 1.15; margin-bottom: 16px;
+  }
+  .article-meta { font-size: 13px; color: var(--muted2); display: flex; align-items: center; gap: 10px; }
+  .meta-sep { color: var(--muted); }
+
+  .article-layout { max-width: 800px; margin: 0 auto; padding: 48px 32px 80px; }
+
+  .quick-answer {
+    background: rgba(200,169,81,0.05);
+    border-left: 3px solid var(--gold);
+    padding: 20px 24px; margin-bottom: 40px;
+  }
+  .qa-label {
+    font-family: var(--cinzel); font-size: 9px; letter-spacing: 0.3em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .quick-answer p { font-size: 15px; color: var(--text); line-height: 1.7; }
+
+  .article-content { font-size: 16px; line-height: 1.85; color: rgba(232,224,208,0.85); margin-bottom: 48px; }
+  .article-content h2 {
+    font-family: var(--cinzel); font-size: 20px; font-weight: 600; color: var(--text);
+    margin: 48px 0 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(200,169,81,0.12);
+  }
+  .article-content h3 { font-family: var(--cinzel); font-size: 16px; color: var(--gold); margin: 32px 0 12px; }
+  .article-content p { margin-bottom: 18px; }
+  .article-content strong { color: var(--text); }
+  .article-content a { color: var(--gold); border-bottom: 1px solid rgba(200,169,81,0.3); transition: border-color 0.2s; }
+  .article-content a:hover { border-color: var(--gold); }
+
+  .kdp-cta {
+    background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.25);
+    padding: 32px; margin: 48px 0;
+  }
+  .kdp-cta-label { font-family: var(--cinzel); font-size: 9px; letter-spacing: 0.3em; color: var(--red); margin-bottom: 10px; text-transform: uppercase; }
+  .kdp-cta h3 { font-family: var(--cinzel); font-size: 20px; color: var(--text); margin-bottom: 10px; }
+  .kdp-cta p { font-size: 14px; color: var(--muted2); margin-bottom: 20px; line-height: 1.6; }
+  .kdp-btn { display: inline-block; background: var(--red); color: var(--text); font-family: var(--cinzel); font-size: 12px; letter-spacing: 0.1em; padding: 12px 28px; transition: background 0.2s; text-decoration: none; }
+  .kdp-btn:hover { background: #a93226; }
+
+  .sources { margin: 40px 0; padding-top: 24px; border-top: 1px solid rgba(200,169,81,0.12); }
+  .sources-label { font-family: var(--cinzel); font-size: 9px; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+  .sources ul { list-style: none; padding: 0; }
+  .sources li { font-size: 12px; color: var(--muted2); line-height: 1.8; }
+
+  .catalog-cta { text-align: center; margin-top: 56px; }
+  .catalog-cta a {
+    font-family: var(--cinzel); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(200,169,81,0.3);
+    padding-bottom: 4px; transition: border-color 0.2s;
+  }
+  .catalog-cta a:hover { border-color: var(--gold); }
+
+  @media (max-width: 768px) {
+    .article-hero-content { padding: 24px 20px 32px; }
+    .article-layout { padding: 32px 20px 60px; }
+  }
+</style>

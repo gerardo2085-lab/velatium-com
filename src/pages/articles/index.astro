@@ -1,0 +1,100 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { PILLAR_LABELS, PILLAR_EMOJI } from '../../lib/episodes';
+import type { Article } from '../../lib/articles';
+
+const articleFiles = await Astro.glob('../../../content/articles/*.json');
+const articles = articleFiles
+  .map((f) => f.default as Article)
+  .filter((a) => a.slug)
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+const pillars = [...new Set(articles.map((a) => a.pillar))];
+---
+
+<Base title="Articles" description="Weekly investigations — documented, sourced, told without cuts.">
+  <Nav />
+
+  <header class="page-header">
+    <p class="page-eyebrow">The Velatium · Articles</p>
+    <h1 class="page-title">Investigations</h1>
+    <p class="page-sub">Weekly, documented, sourced. The record they'd rather you didn't read.</p>
+  </header>
+
+  {pillars.length > 1 && (
+    <div class="pillar-chips">
+      <a href="/articles" class="chip active" data-pillar="all">All</a>
+      {pillars.map((p) => (
+        <a href="/articles" class="chip" data-pillar={p}>{PILLAR_EMOJI[p] ?? ''} {PILLAR_LABELS[p] ?? p}</a>
+      ))}
+    </div>
+  )}
+
+  <div class="article-list">
+    {articles.length === 0 && <p class="empty">No articles published yet — check back soon.</p>}
+    {articles.map((a) => (
+      <a href={`/articles/${a.slug}`} class="article-row" data-pillar={a.pillar}>
+        <div class="article-row-pillar">{PILLAR_EMOJI[a.pillar] ?? '🔍'} {PILLAR_LABELS[a.pillar] ?? a.pillar}</div>
+        <h2 class="article-row-title">{a.title}</h2>
+        <p class="article-row-answer">{a.quick_answer}</p>
+        <div class="article-row-date">{a.date}</div>
+      </a>
+    ))}
+  </div>
+
+  <Footer />
+</Base>
+
+<script>
+  const chips = document.querySelectorAll('.chip');
+  const rows = document.querySelectorAll('.article-row');
+  chips.forEach((chip) => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pillar = chip.getAttribute('data-pillar');
+      chips.forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      rows.forEach((row) => {
+        const match = pillar === 'all' || row.getAttribute('data-pillar') === pillar;
+        (row as HTMLElement).style.display = match ? '' : 'none';
+      });
+    });
+  });
+</script>
+
+<style>
+  .page-header {
+    padding: 110px 80px 48px; text-align: center;
+    border-bottom: 1px solid rgba(200,169,81,0.1);
+  }
+  .page-eyebrow { font-family: var(--lato); font-size: 9px; font-weight: 700; letter-spacing: 0.42em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
+  .page-title { font-family: var(--cinzel); font-size: clamp(36px, 5vw, 60px); font-weight: 700; color: var(--text); line-height: 1.05; margin-bottom: 16px; }
+  .page-sub { font-family: var(--lato); font-size: 16px; color: var(--muted2); line-height: 1.7; max-width: 480px; margin: 0 auto; }
+
+  .pillar-chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding: 32px 24px 0; }
+  .chip {
+    font-family: var(--lato); font-size: 12px; letter-spacing: 0.05em;
+    color: var(--muted2); border: 1px solid rgba(200,169,81,0.2);
+    padding: 8px 16px; text-decoration: none; transition: all 0.2s;
+  }
+  .chip:hover, .chip.active { color: var(--gold); border-color: rgba(200,169,81,0.5); }
+
+  .article-list { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  .empty { text-align: center; color: var(--muted2); font-family: var(--lato); padding: 40px 0; }
+  .article-row {
+    display: block; padding: 28px 0; text-decoration: none;
+    border-bottom: 1px solid rgba(200,169,81,0.08);
+    transition: opacity 0.2s;
+  }
+  .article-row:hover { opacity: 0.8; }
+  .article-row-pillar { font-family: var(--lato); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+  .article-row-title { font-family: var(--cinzel); font-size: 22px; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+  .article-row-answer { font-family: var(--lato); font-size: 14px; color: var(--muted2); line-height: 1.6; margin-bottom: 10px; }
+  .article-row-date { font-family: var(--lato); font-size: 11px; color: var(--muted); }
+
+  @media (max-width: 768px) {
+    .page-header { padding: 88px 24px 40px; }
+  }
+</style>
