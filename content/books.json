@@ -12,7 +12,8 @@
     "price_paperback": "$14.99",
     "spanish_edition": false,
     "amazon_url": null,
-    "cover": "/images/books/the-havana-protocol.jpeg"
+    "cover": "/images/books/the-havana-protocol.jpeg",
+    "es_edition": null
   },
   {
     "slug": "the-vienna-cipher",
@@ -27,7 +28,8 @@
     "price_paperback": null,
     "spanish_edition": false,
     "amazon_url": null,
-    "cover": "/images/books/the-vienna-cipher.png"
+    "cover": "/images/books/the-vienna-cipher.png",
+    "es_edition": null
   },
   {
     "slug": "the-island-that-swallowed-its-children",
@@ -42,7 +44,13 @@
     "price_paperback": "$16.99",
     "spanish_edition": true,
     "amazon_url": "https://a.co/d/099uOz6R",
-    "cover": "/images/books/the-island-that-swallowed-its-children.jpeg"
+    "cover": "/images/books/the-island-that-swallowed-its-children.jpeg",
+    "es_edition": {
+      "title": "La Isla Que Devoró a Sus Hijos",
+      "amazon_url": "https://a.co/d/09a6UgW0",
+      "price_ebook": "$7.99",
+      "price_paperback": null
+    }
   },
   {
     "slug": "before-the-veil-came-down",
@@ -57,7 +65,8 @@
     "price_paperback": null,
     "spanish_edition": false,
     "amazon_url": "https://a.co/d/0eqqxzix",
-    "cover": "/images/books/before-the-veil-came-down.jpg"
+    "cover": "/images/books/before-the-veil-came-down.jpg",
+    "es_edition": null
   },
   {
     "slug": "what-the-revolution-left-behind",
@@ -72,7 +81,8 @@
     "price_paperback": null,
     "spanish_edition": false,
     "amazon_url": null,
-    "cover": null
+    "cover": null,
+    "es_edition": null
   },
   {
     "slug": "the-country-that-cannot-be-seen",
@@ -87,6 +97,7 @@
     "price_paperback": null,
     "spanish_edition": false,
     "amazon_url": null,
-    "cover": "/images/books/the-country-that-cannot-be-seen.jpg"
+    "cover": "/images/books/the-country-that-cannot-be-seen.jpg",
+    "es_edition": null
   }
 ]
